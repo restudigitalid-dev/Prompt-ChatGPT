@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perpustakaan Prompt Interaktif Firestore</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+        }
+        .prompt-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .prompt-container::-webkit-scrollbar-track {
+            background: #e0e0e0;
+        }
+        .prompt-container::-webkit-scrollbar-thumb {
+            background: #a0a0a0;
+            border-radius: 4px;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="text-lg font-semibold text-blue-600">Memuat data dari database...</div>
+    </div>
+
+    <div id="app" class="max-w-6xl mx-auto hidden">
+        
+        <!-- Header & Controls -->
+        <header class="mb-8 p-6 bg-white shadow-xl rounded-xl">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-blue-700 mb-2">Perpustakaan Prompt Interaktif</h1>
+            <p class="text-gray-600 mb-4">Data dimuat dari database secara *real-time*. Selamat tinggal batas panjang file!</p>
+
+            <!-- Status dan Tombol Simpan Awal -->
+            <div id="dbStatus" class="mb-4 text-sm font-medium">
+                <!-- Status dan tombol akan dimuat di sini -->
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-4">
+                <!-- Search Input -->
+                <input type="text" id="searchInput" oninput="filterPrompts()" placeholder="Cari berdasarkan peran, kategori, atau topik..."
+                       class="w-full md:w-3/5 p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150">
+                
+                <!-- Category Filter -->
+                <select id="categoryFilter" onchange="filterPrompts()"
+                        class="w-full md:w-2/5 p-3 border-2 border-gray-300 bg-white rounded-lg focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-150">
+                    <option value="">— Semua Kategori —</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Prompt Results Count -->
+        <div class="text-sm font-medium text-gray-500 mb-4 ml-1">
+            Menampilkan <span id="resultsCount" class="font-bold text-blue-600">0</span> prompt
+        </div>
+
+        <!-- Prompt Cards Container -->
+        <div id="promptList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 prompt-container">
+            <!-- Prompt cards will be injected here by JavaScript -->
+        </div>
+        
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Variables
+        const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const FIREBASE_CONFIG = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const AUTH_TOKEN = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db;
+        let auth;
+        let allPrompts = [];
+        let promptDocRef;
+        let isAuthReady = false;
+
+        // Data Prompts Awal (Bootstrap Data) - Hanya digunakan jika database kosong
+        const initialPromptData = [
+            { category: "1. Pemasaran Konten", tujuan: "Membuat 10 Judul Menarik", role: "Anda adalah seorang Copywriter yang ahli dalam Headline StoryBrand.", task: "Buat 10 judul blog post yang sangat menarik (*Click-Worthy Headlines*) berdasarkan topik: `[Topik Konten]`.", constraint: "Judul harus ringkas (maksimal 70 karakter), mengandung rasa ingin tahu (*curiosity gap*), dan menjanjikan manfaat eksplisit.", format: "Berikan output dalam format daftar berpoin bernomor (1-10) saja." },
+            { category: "1. Pemasaran Konten", tujuan: "Kerangka Konten AIDA", role: "Anda adalah Spesialis Pemasaran Konten yang ahli dalam struktur AIDA (Attention, Interest, Desire, Action).", task: "Buatkan kerangka konten (*outline*) lengkap untuk artikel blog yang membahas `[Topik dan Target Audiens]`.", constraint: "Kerangka harus memiliki bagian terpisah untuk AIDA, dengan minimal 3 sub-poin di setiap bagian, dan total 1500 kata.", format: "Output berupa kerangka berjenjang (heading 1, heading 2)." },
+            { category: "1. Pemasaran Konten", tujuan: "Menulis Postingan Media Sosial Viral", role: "Anda adalah Manajer Komunitas dan Pakar Pemasaran Media Sosial di TikTok/Instagram Reels.", task: "Tulis 3 variasi *caption* untuk postingan video pendek tentang `[Topik Video]`.", constraint: "Setiap *caption* harus menyertakan *Hook* kuat dalam 3 kata pertama, maksimal 120 kata, menggunakan 3-5 *hashtag* yang sedang tren, dan menyertakan *Call-to-Action* (CTA) yang memicu komentar.", format: "Tampilkan setiap *caption* dalam blok teks terpisah." },
+            { category: "1. Pemasaran Konten", tujuan: "Mengubah Artikel Menjadi Email Newsletter", role: "Anda adalah Pemasar Email berpengalaman yang fokus pada retensi pelanggan.", task: "Konversi artikel blog berjudul `[Judul Artikel]` (tentang `[Ringkasan Topik]`) menjadi draf email *newsletter* mingguan.", constraint: "Email harus memiliki *Subject Line* yang kuat, menggunakan nada yang bersahabat dan personal (bukan korporat), menyoroti 3 poin utama dari artikel, dan diakhiri dengan tombol CTA tunggal 'Baca Selengkapnya'.", format: "Tampilkan *Subject Line*, diikuti *body* email." },
+            { category: "1. Pemasaran Konten", tujuan: "Strategi Peluncuran Produk (Content Sequence)", role: "Anda adalah Direktur Pemasaran yang merancang peluncuran produk baru.", task: "Buatkan urutan konten (*Content Sequence*) 5 langkah untuk meluncurkan `[Nama Produk/Layanan]` kepada `[Target Pasar]`.", constraint: "Urutan harus mencakup tahap 'Penyadaran Masalah,' 'Solusi,' 'Pengenalan Produk,' 'Bukti Sosial,' dan 'Penawaran Terbatas.' Tentukan platform dan format konten untuk setiap langkah.", format: "Tabel 5 baris dengan kolom: Tahap, Tujuan, Platform, dan Ide Konten." },
+            { category: "2. SEO & Riset Kata Kunci", tujuan: "Brainstorming Kata Kunci LSI", role: "Anda adalah Konsultan SEO yang ahli dalam *Latent Semantic Indexing* (LSI).", task: "Berikan 15-20 kata kunci LSI, entitas, dan istilah terkait yang harus dimasukkan ke dalam artikel blog tentang `[Kata Kunci Fokus Utama]`.", constraint: "Hanya sertakan kata kunci yang relevan secara kontekstual yang akan membantu Google memahami kedalaman topik, bukan hanya sinonim.", format: "Daftar berpoin." },
+            { category: "2. SEO & Riset Kata Kunci", tujuan: "Menganalisis Niat Pencarian (*Search Intent*)", role: "Anda adalah Analis *Search Intent* dan Konversi.", task: "Untuk kata kunci `[Kata Kunci Target]`, tentukan jenis niat pencarian (Informatif, Komersial, Navigasi, Transaksional) dan jelaskan mengapa. Kemudian, berikan rekomendasi jenis konten (misalnya, 'Panduan Cara', 'Ulasan Produk', 'Laman Utama') yang paling cocok untuk niat tersebut.", constraint: "Jawaban harus ringkas dan logis, maksimal 3 kalimat per bagian.", format: "Judul Niat Pencarian, Penjelasan, Rekomendasi Konten." },
+            { category: "2. SEO & Riset Kata Kunci", tujuan: "Optimalisasi Meta Deskripsi untuk CTR", role: "Anda adalah Spesialis SEO *On-Page* yang berfokus pada *Click-Through Rate* (CTR).", task: "Buatkan 5 variasi Meta Deskripsi untuk laman/artikel tentang `[Judul Halaman/Topik]`.", constraint: "Setiap deskripsi harus mengandung `[Kata Kunci Utama]`, panjang maksimal 155 karakter, dan menyertakan daya tarik emosional (*emotional appeal*) atau angka (jika relevan).", format: "Daftar berpoin, dengan hitungan karakter di samping setiap deskripsi." },
+            { category: "2. SEO & Riset Kata Kunci", tujuan: "Struktur *Pillar* dan *Cluster Content*", role: "Anda adalah Arsitek Informasi dan Perencana Konten.", task: "Buatkan model 'Pillar Page' dan 5 ide 'Cluster Content' yang mendukungnya untuk topik besar: `[Topik Pillar]`.", constraint: "Setiap *Cluster Content* harus memiliki ide judul yang spesifik dan menargetkan sub-topik yang berbeda dan lebih rinci.", format: "Bagian 1: Judul Halaman Pillar. Bagian 2: Daftar *Cluster Content* (Judul dan Tujuan)." },
+            { category: "2. SEO & Riset Kata Kunci", tujuan: "Merumuskan Skema Markup FAQ", role: "Anda adalah Pengembang SEO Teknis.", task: "Tuliskan 3 set Pertanyaan & Jawaban yang siap digunakan untuk Skema Markup FAQ (FAQ Schema) pada halaman produk/layanan `[Nama Produk/Layanan]`.", constraint: "Pertanyaan harus sering ditanyakan oleh pelanggan dan jawabannya harus ringkas, jelas, dan langsung.", format: "Berikan output sebagai JSON-LD *script* yang valid (gunakan kode blok)." },
+            { category: "3. Analisis Bisnis", tujuan: "Analisis SWOT Kompetitor", role: "Anda adalah Analis Riset Pasar Senior.", task: "Lakukan analisis SWOT (*Strengths, Weaknesses, Opportunities, Threats*) mendalam terhadap kompetitor `[Nama Kompetitor]` dalam industri `[Industri]`.", constraint: "Berikan minimal 3 poin spesifik untuk setiap kuadran (S, W, O, T) yang berfokus pada model bisnis, strategi pemasaran, dan kelemahan produk mereka.", format: "Tabel 2x2 yang memisahkan SWOT." },
+            { category: "3. Analisis Bisnis", tujuan: "Kerangka Rencana Pemasaran Baru", role: "Anda adalah Konsultan Strategi Bisnis.", task: "Buatkan kerangka rencana pemasaran 90 hari untuk meluncurkan `[Nama Produk/Layanan Baru]`.", constraint: "Rencana harus dibagi per bulan (Bulan 1: Persiapan & Riset, Bulan 2: Peluncuran & Eksekusi, Bulan 3: Analisis & Optimasi) dengan 4-5 tugas utama per bulan.", format: "Daftar berjenjang per bulan." },
+            { category: "3. Analisis Bisnis", tujuan: "Membuat Kasus Bisnis (*Business Case*) Sederhana", role: "Anda adalah Manajer Proyek dan Penyusun Proposal.", task: "Buatkan kasus bisnis (*Business Case*) singkat untuk inisiatif `[Inisiatif/Proyek]`.", constraint: "Kasus harus mencakup: Masalah, Solusi yang Diusulkan, Manfaat Utama (3 poin), Estimasi Biaya (placeholder), dan Metrik Keberhasilan (2 metrik).", format: "Teks terstruktur dengan sub-judul untuk setiap bagian." },
+            { category: "3. Analisis Bisnis", tujuan: "Merumuskan 3 Persona Pelanggan (*Buyer Persona*)", role: "Anda adalah Pakar *Customer Journey*.", task: "Rancang 3 persona pelanggan (*Buyer Persona*) yang berbeda untuk produk/layanan `[Produk/Layanan]`.", constraint: "Setiap persona harus memiliki Nama, Pekerjaan, Tantangan Utama, Tujuan, dan Bagaimana Produk Anda Membantu.", format: "Tiga blok teks terpisah, masing-masing untuk satu persona." },
+            { category: "3. Analisis Bisnis", tujuan: "Analisis Lima Kekuatan Porter (*Five Forces*)", role: "Anda adalah Analis Strategi Korporat.", task: "Terapkan Kerangka Lima Kekuatan Porter (Ancaman Pendatang Baru, Kekuatan Tawar Pemasok, Kekuatan Tawar Pembeli, Ancaman Produk Pengganti, Persaingan Industri) untuk menganalisis industri `[Nama Industri]`.", constraint: "Jelaskan tingkat kekuatan (Tinggi/Sedang/Rendah) dan alasannya untuk setiap kekuatan dalam satu paragraf singkat.", format: "Daftar bernomor 1-5." },
+            { category: "4. Peningkatan Produktivitas Harian", tujuan: "Meringkas Rapat Panjang", role: "Anda adalah Asisten Eksekutif yang ahli dalam notulensi.", task: "Ringkas transkrip rapat di bawah ini menjadi 5 Poin Utama, 3 Keputusan Penting, dan 3 Item Tindak Lanjut (*Action Items*) dengan penanggung jawab. **Teks Rapat:** `[SALIN/PASTE TRANSKRIP RAPAT DI SINI]`.", constraint: "Gunakan bahasa yang profesional dan *to the point*.", format: "Tiga bagian berlabel yang jelas." },
+            { category: "4. Peningkatan Produktivitas Harian", tujuan: "Menyusun Email Penolakan Profesional", role: "Anda adalah HR Manager yang menjaga hubungan baik dengan kandidat.", task: "Tulis draf email penolakan yang profesional dan empatik untuk kandidat yang tidak berhasil untuk posisi `[Posisi yang Dilamar]`.", constraint: "Email harus singkat, mengucapkan terima kasih atas waktu mereka, memberikan umpan balik yang sangat umum (non-spesifik), dan mendorong mereka untuk melamar di masa depan.", format: "*Subject Line*, diikuti *body* email lengkap." },
+            { category: "4. Peningkatan Produktivitas Harian", tujuan: "Rencana Belajar 30 Hari", role: "Anda adalah Pelatih Pengembangan Keterampilan.", task: "Buatkan rencana studi terstruktur selama 30 hari untuk menguasai `[Keterampilan/Topik Baru]`.", constraint: "Rencana harus membagi proses menjadi 4 minggu (Minggu 1: Dasar, Minggu 2: Praktik, Minggu 3: Proyek, Minggu 4: Ulasan), dengan target belajar harian (1-2 jam/hari).", format: "Tabel 4 baris (per minggu) dengan deskripsi target dan aktivitas." },
+            { category: "4. Peningkatan Produktivitas Harian", tujuan: "Mengoreksi dan Meningkatkan Teks (Clarity & Tone)", role: "Anda adalah Editor Bahasa Indonesia.", task: "Koreksi tata bahasa, perbaiki kejelasan, dan tingkatkan nada (*tone*) pada teks di bawah ini agar terdengar lebih meyakinkan dan profesional. **Teks Asli:** `[SALIN/PASTE TEKS DI SINI]`.", constraint: "Pertahankan makna asli teks, dan berikan alasan singkat mengapa perubahan tersebut dilakukan.", format: "Teks Asli, Teks Revisi, Penjelasan Perubahan." },
+            { category: "4. Peningkatan Produktivitas Harian", tujuan: "Membuat Daftar Tugas Prioritas (Eisenhower Matrix)", role: "Anda adalah Spesialis Manajemen Waktu dan Produktivitas.", task: "Ambil daftar tugas di bawah ini dan klasifikasikan setiap item ke dalam kuadran Matriks Eisenhower (Penting & Mendesak, Penting & Tidak Mendesak, Tidak Penting & Mendesak, Tidak Penting & Tidak Mendesak). **Daftar Tugas:** `[Daftar Tugas Anda (misalnya: Kirim laporan, Atur ulang email, dll)]`.", constraint: "Berikan satu rekomendasi tindakan untuk setiap item (Lakukan Sekarang, Jadwalkan, Delegasikan, Hilangkan).", format: "Tabel 3 kolom: Tugas, Kuadran, Rekomendasi Tindakan." },
+            { category: "5. Role-Playing Persona", tujuan: "Pelatih Wawancara Kerja", role: "Anda adalah Pewawancara Senior yang bersikap skeptis dan sangat analitis dari perusahaan teknologi `[Nama Perusahaan]`.", task: "Ajukan 5 pertanyaan wawancara 'Star Method' (*Situasi, Tugas, Aksi, Hasil*) untuk posisi `[Nama Posisi]`.", constraint: "Setelah setiap pertanyaan, tunggu jawaban saya, lalu berikan umpan balik yang jujur tentang kejelasan dan kelengkapan jawaban saya.", format: "Pertanyaan berpoin, dilanjutkan dengan jeda untuk jawaban." },
+            { category: "5. Role-Playing Persona", tujuan: "Konsultan Investasi Keuangan", role: "Anda adalah Penasihat Keuangan (*Financial Advisor*) berlisensi yang berfokus pada portofolio jangka panjang dan risiko rendah.", task: "Analisis situasi keuangan saya saat ini (`[Usia, Jumlah Tabungan, Toleransi Risiko]`) dan berikan 3 rekomendasi investasi spesifik (misalnya, ETF, obligasi).", constraint: "Semua saran harus bersifat edukatif dan konservatif.", format: "Paragraf pembuka analisis, diikuti daftar rekomendasi bernomor." },
+            { category: "5. Role-Playing Persona", tujuan: "Jurnalis Kritis yang Membantah", role: "Anda adalah Jurnalis Investigatif dari *The New York Times* yang sangat skeptis dan selalu mencari kelemahan dalam argumen.", task: "Lakukan debat sengit terhadap argumen utama saya: `[Argumen Utama Anda]`.", constraint: "Berikan 3 argumen balasan yang kuat dan berdasarkan logika/data yang bertentangan dengan setiap klaim saya.", format: "Setiap balasan harus dalam paragraf terpisah." },
+            { category: "5. Role-Playing Persona", tujuan: "Pengembang Web yang Memperdebatkan Pilihan Teknologi", role: "Anda adalah *Lead Software Engineer* yang merupakan penganut berat `[Pilihan Teknologi A, misal: React]`.", task: "Debatkan dengan saya mengapa `[Pilihan Teknologi A]` secara teknis lebih unggul dan lebih efisien daripada `[Pilihan Teknologi B, misal: Vue/Angular]` untuk proyek skala besar yang berfokus pada kinerja dan skalabilitas.", constraint: "Gunakan istilah teknis yang spesifik (misalnya: Virtual DOM, Hooks, Bundling).", format: "Tiga poin perbandingan yang mendalam dan teknis." },
+            { category: "5. Role-Playing Persona", tujuan: "Pakar Bahasa Asing (Simulasi Percakapan)", role: "Anda adalah penutur asli dan Guru Bahasa Spanyol dari Madrid (tingkat C1).", task: "Lakukan simulasi percakapan 5 putaran dengan saya tentang topik `[Topik Percakapan, misal: Liburan mendatang]`.", constraint: "Setelah setiap putaran, perbaiki tata bahasa atau kesalahan kosakata saya, dan berikan frasa yang lebih alami untuk digunakan.", format: "Dialog yang diikuti oleh umpan balik korektif." },
+            { category: "6. Pengembangan Web (Frontend)", tujuan: "Membuat Kerangka Komponen React", role: "Anda adalah Pengembang Frontend spesialis React dan Tailwind CSS.", task: "Buatkan kerangka kode untuk komponen React fungsional bernama `UserProfileCard`.", constraint: "Komponen harus menggunakan Hooks (`useState`, `useEffect`), menerima `props` (`user`, `loading`), dan menggunakan kelas Tailwind CSS untuk tampilan yang sepenuhnya responsif.", format: "Kode blok React (`.jsx`) lengkap dengan impor." },
+            { category: "6. Pengembangan Web (Frontend)", tujuan: "Menulis Kode untuk Validasi Formulir", role: "Anda adalah Ahli JavaScript Murni.", task: "Tuliskan fungsi JavaScript yang memvalidasi formulir pendaftaran.", constraint: "Fungsi harus memeriksa bahwa bidang `email` adalah format yang valid, `password` minimal 8 karakter, dan mengembalikan objek error yang jelas.", format: "Kode blok JavaScript yang mandiri." },
+            { category: "6. Pengembangan Web (Frontend)", tujuan: "Memahami Konsep CSS Grid vs Flexbox", role: "Anda adalah Instruktur Pengembangan Web.", task: "Jelaskan perbedaan utama, kasus penggunaan terbaik, dan kelemahan antara CSS Grid dan Flexbox.", constraint: "Penjelasan harus singkat, menggunakan analogi, dan hanya terdiri dari 3 paragraf.", format: "Teks penjelasan." },
+            { category: "6. Pengembangan Web (Frontend)", tujuan: "Membuat Desain Antarmuka Pengguna (UI) Mobile-First", role: "Anda adalah Desainer UI/UX.", task: "Buatkan 5 saran desain *mobile-first* untuk halaman *checkout* e-commerce.", constraint: "Fokus pada kemudahan sentuh (*touch target*), minimalisasi input, dan visibilitas CTA utama.", format: "Daftar bernomor dengan deskripsi singkat." },
+            { category: "6. Pengembangan Web (Frontend)", tujuan: "Debugging Error Konsol", role: "Anda adalah Debugger Senior.", task: "Analisis pesan error JavaScript di bawah ini dan berikan 3 kemungkinan penyebab dan solusinya. **Pesan Error:** `[SALIN/PASTE PESAN ERROR DI SINI]`.", constraint: "Solusi harus mencakup pemeriksaan *scope* variabel dan urutan eksekusi.", format: "Teks penjelasan." },
+            { category: "7. Analisis Data & Statistik", tujuan: "Memformulasikan Hipotesis A/B Testing", role: "Anda adalah Analis Data dan Spesialis Optimasi Konversi (CRO).", task: "Buatkan hipotesis statistik lengkap (H0 dan H1) untuk A/B testing yang ingin menguji: `[Variabel yang diuji, misal: Warna tombol CTA dari merah ke hijau]` pada `[Metrik Konversi, misal: Tingkat Pembelian]`.", constraint: "Hipotesis harus terstruktur secara formal dan dapat diuji.", format: "Dua baris: H0 dan H1." },
+            { category: "7. Analisis Data & Statistik", tujuan: "Menjelaskan Konsep Regresi Linier", role: "Anda adalah Tutor Statistik.", task: "Jelaskan konsep Regresi Linier Sederhana kepada seseorang tanpa latar belakang statistik.", constraint: "Gunakan analogi yang mudah dipahami (misalnya, hubungan antara jam belajar dan nilai), hindari rumus kompleks, dan jelaskan konsep *R-squared* dalam satu kalimat.", format: "Paragraf penjelasan singkat." },
+            { category: "7. Analisis Data & Statistik", tujuan: "Struktur Query SQL untuk Gabungan Data", role: "Anda adalah Ahli Database SQL.", task: "Tuliskan *query* SQL yang menggabungkan tabel `orders` dan tabel `customers` untuk menemukan total pengeluaran setiap pelanggan yang tinggal di `[Nama Kota]`.", constraint: "Gunakan `LEFT JOIN` dan fungsi agregasi `SUM()`.", format: "Kode blok SQL." },
+            { category: "7. Analisis Data & Statistik", tujuan: "Membuat Daftar Insight dari Data Penjualan", role: "Anda adalah Analis Bisnis yang berfokus pada hasil.", task: "Berikan 5 *insight* yang dapat ditindaklanjuti (*actionable insights*) berdasarkan data penjualan yang menunjukkan `[Deskripsi Data, misal: Penjualan produk A naik 50% di bulan Desember, tetapi pelanggan baru menurun]`.", constraint: "Setiap *insight* harus disertai dengan rekomendasi bisnis spesifik.", format: "Daftar bernomor (1-5), dengan Insight dan Rekomendasi di setiap poin." },
+            { category: "7. Analisis Data & Statistik", tujuan: "Memilih Visualisasi Data yang Tepat", role: "Anda adalah Desainer Visualisasi Data.", task: "Untuk setiap jenis data/tujuan di bawah ini, sebutkan jenis grafik terbaik untuk digunakan dan jelaskan alasannya.", constraint: "Hanya mencakup 3 skenario: Perbandingan antara kategori, Distribusi satu variabel, Hubungan antara dua variabel.", format: "Tabel 3 baris: Tujuan, Jenis Grafik, Alasan." },
+            { category: "8. Email Marketing", tujuan: "Membuat Alur Onboarding Email 3 Langkah", role: "Anda adalah Spesialis Otomasi Pemasaran.", task: "Rancang urutan otomatisasi email *Onboarding* 3 langkah untuk pelanggan yang baru mendaftar di layanan `[Nama Layanan/SaaS]`.", constraint: "Email 1: Sambutan & Manfaat Utama, Email 2: Fitur Terbaik & Demo Video, Email 3: CTA untuk Upgrade/Kontak Dukungan. Berikan *Subject Line* untuk setiap email.", format: "Daftar berjenjang per email (*Subject Line*, Tujuan, Konten Singkat)." },
+            { category: "8. Email Marketing", tujuan: "Merumuskan Subject Line yang Memicu Urgensi", role: "Anda adalah *Copywriter* Email yang menguasai psikologi pelanggan.", task: "Buatkan 10 *Subject Line* yang berbeda untuk email promosi yang berakhir dalam 24 jam.", constraint: "Setengahnya harus menggunakan angka dan setengahnya menggunakan kata-kata yang memicu rasa takut kehilangan (*FOMO*). Maksimal 40 karakter.", format: "Daftar berpoin bernomor." },
+            { category: "8. Email Marketing", tujuan: "Email Keranjang Terabaikan (*Abandoned Cart*)", role: "Anda adalah Pakar Retensi E-commerce.", task: "Tulis draf lengkap email pengingat Keranjang Terabaikan yang pertama.", constraint: "Email harus bersikap ramah, menyebutkan produk yang ditinggalkan (placeholder: `[Nama Produk]`), dan menyertakan tombol untuk kembali ke keranjang tanpa diskon (fokus pada bantuan).", format: "*Subject Line* dan *Body* email lengkap." },
+            { category: "8. Email Marketing", tujuan: "Strategi Segmentasi Daftar Email", role: "Anda adalah Manajer Basis Data Pelanggan.", task: "Berikan 4 cara terbaik untuk mensegmentasikan daftar pelanggan e-commerce yang menjual `[Jenis Produk]`.", constraint: "Segmentasi harus didasarkan pada perilaku pembelian, bukan hanya demografi, dan jelaskan tujuan pemasaran untuk setiap segmen.", format: "Daftar bernomor dengan Segmen dan Tujuan Pemasaran." },
+            { category: "8. Email Marketing", tujuan: "Menggunakan Storytelling dalam Email", role: "Anda adalah *Storyteller* dan *Email Writer*.", task: "Tulis draf paragraf pembuka untuk email yang menggunakan cerita pribadi (placeholder: `[Cerita Pengalaman Awal]`) untuk memperkenalkan produk/layanan `[Nama Produk]`.", constraint: "Paragraf harus memiliki 4-5 kalimat dan membangun koneksi emosional sebelum *pivot* ke penawaran.", format: "Teks paragraf." },
+            { category: "9. Copywriting Penjualan", tujuan: "Menulis Lead Magnet yang Menarik", role: "Anda adalah *Conversion Copywriter*.", task: "Tulis 5 variasi judul untuk *Lead Magnet* (e-book, checklist, atau webinar) tentang `[Topik Lead Magnet]`.", constraint: "Judul harus spesifik, menjanjikan transformasi yang cepat, dan mengandung kata yang memicu urgensi (misalnya, 'Rahasia', 'Cepat', 'Terbukti').", format: "Daftar bernomor." },
+            { category: "9. Copywriting Penjualan", tujuan: "Membuat Bullet Points yang Kuat (Fasilitas vs Manfaat)", role: "Anda adalah *Sales Copywriter* yang menggunakan teknik Peningkatan Manfaat.", task: "Konversi 5 *Fitur/Fasilitas* produk `[Nama Produk]` menjadi *Manfaat yang Kuat* (*Benefit-Driven Bullet Points*). **Fitur:** `[5 Daftar Fitur Produk]`.", constraint: "Gunakan format: **FASILITAS:** [Fitur] -> **MANFAAT:** [Manfaat Kuat].", format: "Daftar berpoin (5 poin)." },
+            { category: "9. Copywriting Penjualan", tujuan: "Kerangka Landing Page (USP)", role: "Anda adalah Spesialis *Landing Page*.", task: "Buatkan kerangka bagian 'Above the Fold' (*area pandang pertama*) untuk *landing page* yang menjual `[Produk/Layanan]`.", constraint: "Kerangka harus mencakup: *Headline* Utama, *Sub-Headline* (dengan bukti), *Unique Selling Proposition* (USP) dalam 3 poin, dan tombol CTA.", format: "Teks terstruktur dengan label untuk setiap elemen." },
+            { category: "9. Copywriting Penjualan", tujuan: "Mengatasi Keberatan Pelanggan", role: "Anda adalah Tim Penjualan yang Berempati.", task: "Tuliskan skrip tanggapan singkat untuk mengatasi keberatan pelanggan yang mengatakan: `[Keberatan Pelanggan, misal: Harganya terlalu mahal]`.", constraint: "Tanggapan harus berempati terlebih dahulu, memvalidasi perasaan mereka, dan kemudian menggeser fokus ke Nilai/ROI.", format: "Teks skrip." },
+            { category: "9. Copywriting Penjualan", tujuan: "Membuat Slogan/Tagline yang Berdampak", role: "Anda adalah Ahli Branding.", task: "Buatkan 10 Slogan/Tagline yang berbeda untuk perusahaan `[Jenis Perusahaan/Merek]`.", constraint: "Slogan harus pendek (maksimal 7 kata), mencerminkan manfaat emosional utama, dan mudah diingat.", format: "Daftar bernomor." },
+            { category: "10. Pelatihan Bahasa & Kosakata", tujuan: "Menerjemahkan dan Meningkatkan Nada Profesional", role: "Anda adalah Penerjemah Teknis dan Editor Gaya Bahasa.", task: "Terjemahkan teks dari Bahasa Indonesia ke Bahasa Inggris dan tingkatkan nadanya agar terdengar lebih formal dan profesional. **Teks Asli:** `[SALIN/PASTE TEKS DI SINI]`.", constraint: "Jangan gunakan frasa informal, dan pastikan terjemahan akurat secara kontekstual.", format: "Teks Asli (ID), Teks Revisi (EN)." },
+            { category: "10. Pelatihan Bahasa & Kosakata", tujuan: "Belajar 10 Idiom untuk Bisnis", role: "Anda adalah Guru Bahasa Inggris Bisnis.", task: "Berikan 10 idiom yang paling umum digunakan dalam rapat bisnis atau korespondensi email di lingkungan korporat berbahasa Inggris.", constraint: "Sertakan arti dari setiap idiom dan berikan 1 contoh kalimat penggunaannya.", format: "Daftar bernomor dengan Idiom, Arti, dan Contoh." },
+            { category: "10. Pelatihan Bahasa & Kosakata", tujuan: "Memperbaiki Pengucapan/Intonasi (Simulasi)", role: "Anda adalah Mitra Percakapan Bahasa Inggris.", task: "Berikan 5 kalimat yang sering salah diucapkan/diintonasikan oleh penutur Bahasa Indonesia.", constraint: "Setelah saya mengetikkan (mensimulasikan) ucapan saya untuk setiap kalimat, koreksi dan jelaskan aturan intonasi atau pengucapan yang benar.", format: "Daftar berpoin." },
+            { category: "10. Pelatihan Bahasa & Kosakata", tujuan: "Latihan Menulis Ringkasan Eksekutif", role: "Anda adalah Editor Komunikasi Bisnis.", task: "Tuliskan 5 paragraf tentang topik `[Topik Bisnis/Teknis]`. Kemudian, minta saya untuk meringkasnya dalam 3 kalimat sebagai *Executive Summary*.", constraint: "Paragraf harus mengandung terminologi teknis.", format: "Teks, diikuti instruksi tugas." },
+            { category: "10. Pelatihan Bahasa & Kosakata", tujuan: "Memahami Perbedaan Kata-kata Sejenis (*Synonym Nuances*)", role: "Anda adalah Leksikograf Bahasa Indonesia.", task: "Jelaskan perbedaan nuansa (konotasi, konteks penggunaan) antara 3 kata kerja berikut: `[Kata Kerja 1, Kata Kerja 2, Kata Kerja 3, misal: Melihat, Mengamati, Memperhatikan]`.", constraint: "Berikan satu kalimat contoh yang menunjukkan kapan setiap kata yang berbeda itu tepat untuk digunakan.", format: "Daftar berpoin (3 poin)." },
+            { category: "11. E-commerce & Manajemen Produk", tujuan: "Membuat Deskripsi Produk yang Berorientasi Manfaat", role: "Anda adalah Spesialis Daftar Produk E-commerce.", task: "Tuliskan deskripsi produk yang mengkonversi untuk `[Nama Produk E-commerce, misal: Smartwatch Anti Air]`.", constraint: "Deskripsi harus menggunakan formula *PAS* (Problem, Agitate, Solve), panjang 150 kata, dan berfokus pada manfaat emosional (bukan hanya fitur).", format: "Teks paragraf tunggal." },
+            { category: "11. E-commerce & Manajemen Produk", tujuan: "Strategi Penetapan Harga Berbasis Nilai (*Value-Based Pricing*)", role: "Anda adalah Konsultan Penetapan Harga.", task: "Tentukan 3 tingkatan harga (*Tiers*) untuk `[Produk/Layanan Digital]` menggunakan strategi *Value-Based Pricing*.", constraint: "Tingkat harus mencakup: Basic, Pro, dan Premium. Berikan alasan nilai yang membenarkan perbedaan harga pada setiap tingkatan.", format: "Tabel 3 kolom: Tingkat, Harga (placeholder), Alasan Nilai." },
+            { category: "11. E-commerce & Manajemen Produk", tujuan: "Menangani Ulasan Buruk yang Sensitif", role: "Anda adalah Manajer Reputasi Merek Online.", task: "Tuliskan respons publik yang profesional dan damai terhadap ulasan bintang 1 dari pelanggan yang mengeluh tentang `[Masalah Spesifik, misal: Pengiriman terlambat]`.", constraint: "Respons harus berterima kasih, menawarkan pengembalian dana/pengiriman ulang (pilih salah satu), dan meminta detail foto untuk dokumentasi.", format: "Teks balasan publik." },
+            { category: "11. E-commerce & Manajemen Produk", tujuan: "Checklist Peluncuran Produk di Marketplace", role: "Anda adalah Spesialis Operasi Marketplace (misal: Tokopedia/Shopee).", task: "Buatkan *checklist* 10 langkah pra-peluncuran untuk produk baru.", constraint: "Daftar harus mencakup aspek SEO di marketplace, stok/inventaris awal, dan strategi foto produk.", format: "Daftar berpoin bernomor (1-10)." },
+            { category: "11. E-commerce & Manajemen Produk", tujuan: "Menganalisis Biaya Perolehan Pelanggan (CAC)", role: "Anda adalah Analis Metrik E-commerce.", task: "Jelaskan cara menghitung CAC dan 3 cara spesifik untuk menurunkannya bagi toko online yang mengandalkan iklan berbayar (PPC).", constraint: "Penjelasan harus ringkas (maksimal 2 paragraf) dan mudah dipahami.", format: "Teks penjelasan." },
+            { category: "11. E-commerce & Manajemen Produk", tujuan: "Merumuskan Kebijakan Pengembalian yang Jelas", role: "Anda adalah Penulis Kebijakan Hukum E-commerce.", task: "Tuliskan draf kebijakan pengembalian produk 30 hari yang jelas dan adil.", constraint: "Kebijakan harus menyebutkan syarat kondisi produk (belum terpakai), biaya pengembalian (ditanggung pembeli/penjual), dan prosedur langkah demi langkah.", format: "Teks berstruktur." },
+            { category: "11. E-commerce & Manajemen Produk", tujuan: "Membuat Bundling Produk yang Menarik", role: "Anda adalah Pakar Optimasi Rata-rata Nilai Pesanan (AOV).", task: "Berikan 3 ide *Product Bundling* yang logis untuk produk utama `[Produk Utama]`.", constraint: "Setiap ide *bundling* harus disertai dengan nama *bundling* yang menarik dan persentase diskon yang direkomendasikan (placeholder).", format: "Daftar bernomor dengan Nama Bundling dan Strategi." },
+            { category: "11. E-commerce & Manajemen Produk", tujuan: "Brainstorming Nama Produk Kreatif", role: "Anda adalah Konsultan Branding Produk.", task: "Buatkan 10 ide nama produk yang menarik dan mudah diingat untuk kategori `[Kategori Produk, misal: Peralatan Dapur Minimalis]`.", constraint: "Nama harus pendek (maksimal 2-3 kata), unik, dan mencerminkan manfaat produk.", format: "Daftar bernomor." },
+            { category: "11. E-commerce & Manajemen Produk", tujuan: "Menciptakan Rasa Kelangkaan (*Scarcity*) dalam Copy", role: "Anda adalah Copywriter Penjualan.", task: "Tulis 3 baris *copy* untuk digunakan di halaman produk yang menciptakan rasa kelangkaan dan urgensi (*FOMO*) untuk produk `[Nama Produk Limited Edition]`.", constraint: "Gunakan angka yang spesifik (misalnya, 'hanya tersisa X'), waktu, dan fokus pada hilangnya peluang.", format: "Tiga baris teks terpisah." },
+            { category: "11. E-commerce & Manajemen Produk", tujuan: "Membuat Deskripsi Gambar Produk (Alt Text) untuk SEO", role: "Anda adalah Spesialis SEO Gambar.", task: "Tulis 5 *Alt Text* deskriptif dan SEO-friendly untuk gambar produk `[Nama Produk dan Detail Gambar, misal: Sepatu Lari Merah Ukuran 42]`.", constraint: "Setiap *Alt Text* harus mengandung kata kunci utama dan mendeskripsikan gambar secara akurat untuk pengguna disabilitas.", format: "Daftar berpoin." },
+            { category: "12. Pemasaran Afiliasi & Kemitraan", tujuan: "Merumuskan Struktur Komisi Afiliasi", role: "Anda adalah Manajer Program Afiliasi.", task: "Rancang 3 tingkatan komisi (misalnya: Silver, Gold, Platinum) untuk program afiliasi yang menjual `[Produk/Layanan Digital]`.", constraint: "Komisi harus didasarkan pada volume penjualan bulanan dan harus jelas insentifnya untuk mencapai tingkatan berikutnya.", format: "Tabel 3 baris: Tingkat, Persentase Komisi, Syarat Volume." },
+            { category: "12. Pemasaran Afiliasi & Kemitraan", tujuan: "Draft Email Perekrutan Afiliasi Baru", role: "Anda adalah Perekrut Afiliasi.", task: "Tulis draf email personal yang menarik untuk mengundang *influencer* atau *content creator* di bidang `[Niche Konten]` untuk bergabung dengan program afiliasi Anda.", constraint: "Email harus menyoroti manfaat (komisi tinggi, dukungan materi), dan menyertakan CTA yang jelas untuk mendaftar.", format: "*Subject Line* dan *Body* email lengkap." },
+            { category: "12. Pemasaran Afiliasi & Kemitraan", tujuan: "Membuat 5 Ide Konten Afiliasi untuk Blogger", role: "Anda adalah Manajer Konten Afiliasi.", task: "Berikan 5 ide judul dan format konten (misalnya: ulasan, perbandingan) yang dapat digunakan blogger untuk mempromosikan `[Nama Produk/Layanan SaaS]`.", constraint: "Ide harus menargetkan berbagai tahap corong pemasaran (kesadaran hingga pembelian).", format: "Daftar bernomor." },
+            { category: "12. Pemasaran Afiliasi & Kemitraan", tujuan: "Menangani Permintaan Kemitraan Sponsorship", role: "Anda adalah Direktur Kemitraan.", task: "Tulis draf email balasan formal untuk merek/organisasi yang meminta kemitraan *sponsorship* untuk acara mereka.", constraint: "Balasan harus sopan, meminta proposal rinci (biaya, ROI yang diharapkan, jangkauan audiens), dan menjaga nada terbuka.", format: "*Subject Line* dan *Body* email lengkap." },
+            { category: "12. Pemasaran Afiliasi & Kemitraan", tujuan: "Kerangka Kontrak Afiliasi Sederhana", role: "Anda adalah Konsultan Hukum Bisnis Online.", task: "Tuliskan 3 poin utama yang harus ada dalam kontrak afiliasi standar.", constraint: "Poin harus mencakup ketentuan pembayaran, larangan pemasaran merek (misalnya: PPC atas merek), dan masa berlaku *cookie*.", format: "Daftar berpoin." },
+            { category: "12. Pemasaran Afiliasi & Kemitraan", tujuan: "Email Pembaruan untuk Afiliasi yang Kurang Aktif", role: "Anda adalah Manajer Kinerja Afiliasi.", task: "Tulis email yang mendorong afiliasi yang tidak aktif untuk mulai mempromosikan lagi.", constraint: "Email harus menyebutkan sumber daya baru yang tersedia (materi promosi, tawaran diskon baru), dan menanyakan apakah mereka butuh dukungan.", format: "*Subject Line* dan *Body* email lengkap." },
+            { category: "12. Pemasaran Afiliasi & Kemitraan", tujuan: "Brainstorming Bonus untuk Afiliasi", role: "Anda adalah Spesialis Insentif.", task: "Berikan 5 ide bonus non-finansial yang kreatif untuk memotivasi afiliasi yang berkinerja tinggi.", constraint: "Bonus harus berupa pengakuan, akses, atau pelatihan (bukan uang tunai atau komisi).", format: "Daftar berpoin." },
+            { category: "12. Pemasaran Afiliasi & Kemitraan", tujuan: "Mengembangkan Panduan Merek untuk Afiliasi", role: "Anda adalah Spesialis Merek.", task: "Tulis 3 aturan penting yang harus diikuti afiliasi saat menggunakan aset merek Anda.", constraint: "Aturan harus mencakup penggunaan logo, nada suara (*tone of voice*), dan larangan membuat klaim palsu.", format: "Daftar bernomor." },
+            { category: "12. Pemasaran Afiliasi & Kemitraan", tujuan: "Membuat Template Review Produk Afiliasi (Struktur)", role: "Anda adalah Editor Konten.", task: "Buatkan kerangka 5 poin yang harus diikuti afiliasi saat menulis ulasan produk untuk `[Nama Produk]`.", constraint: "Kerangka harus mencakup: Pendahuluan (Hook), Fitur & Manfaat, Pengalaman Pribadi, Pro/Kontra Jujur, dan CTA yang Kuat.", format: "Daftar bernomor." },
+            { category: "12. Pemasaran Afiliasi & Kemitraan", tujuan: "Strategi Menangani Kecurangan Afiliasi (*Fraud*)", role: "Anda adalah Koordinator Kepatuhan Program.", task: "Jelaskan 3 tanda peringatan (*red flags*) dari kecurangan afiliasi (misalnya, *traffic* aneh, klaim yang salah) dan tindakan pencegahan yang dapat diterapkan.", constraint: "Penjelasan harus singkat dan prosedural.", format: "Teks penjelasan." },
+            { category: "13. Layanan Pelanggan & Pengalaman Pelanggan (CX)", tujuan: "Membuat 10 FAQ Otomatis untuk Chatbot", role: "Anda adalah Manajer Dukungan Pelanggan.", task: "Buatkan 10 Pertanyaan dan Jawaban (Q&A) yang paling sering diajukan untuk chatbot di situs web yang menjual `[Jenis Produk/Layanan]`.", constraint: "Jawaban harus sangat ringkas (maksimal 2 kalimat) dan langsung memberikan solusi atau tautan.", format: "Daftar bernomor, dengan Q: dan A: yang jelas." },
+            { category: "13. Layanan Pelanggan & Pengalaman Pelanggan (CX)", tujuan: "Template Balasan Keluhan 'Produk Rusak'", role: "Anda adalah Agen Layanan Pelanggan yang Berempati dan Berorientasi Solusi.", task: "Tulis template balasan email untuk keluhan pelanggan yang menerima produk rusak.", constraint: "Balasan harus meminta maaf, menawarkan pengembalian dana/pengiriman ulang (pilih salah satu), dan meminta detail foto untuk dokumentasi.", format: "*Subject Line* dan *Body* email template lengkap." },
+            { category: "13. Layanan Pelanggan & Pengalaman Pelanggan (CX)", tujuan: "Skrip Telepon untuk Follow-up Pelanggan VIP", role: "Anda adalah Spesialis Hubungan Pelanggan VIP.", task: "Tulis skrip telepon singkat untuk menghubungi pelanggan berharga yang belum melakukan pembelian dalam 3 bulan terakhir.", constraint: "Skrip harus personal, menanyakan pengalaman terakhir mereka, dan menawarkan pratinjau produk/layanan baru secara eksklusif.", format: "Dialog (Anda/Pelanggan)." },
+            { category: "13. Layanan Pelanggan & Pengalaman Pelanggan (CX)", tujuan: "Menganalisis dan Meningkatkan *Customer Effort Score* (CES)", role: "Anda adalah Pakar Metrik Pengalaman Pelanggan.", task: "Jelaskan apa itu *Customer Effort Score* (CES) dan berikan 3 contoh tindakan nyata untuk mengurangi upaya pelanggan dalam proses *checkout* online.", constraint: "Fokus pada penghapusan hambatan.", format: "Teks penjelasan, diikuti daftar berpoin." },
+            { category: "13. Layanan Pelanggan & Pengalaman Pelanggan (CX)", tujuan: "Draft Permintaan Umpan Balik (Survei CSAT)", role: "Anda adalah Manajer Kualitas Layanan.", task: "Tulis draf email pasca-interaksi yang meminta pelanggan mengisi survei singkat *Customer Satisfaction* (CSAT) setelah *support chat*.", constraint: "Email harus singkat, sopan, dan menjelaskan bahwa survei hanya membutuhkan waktu 30 detik.", format: "*Subject Line* dan *Body* email." },
+            { category: "13. Layanan Pelanggan & Pengalaman Pelanggan (CX)", tujuan: "Strategi Menangani Pelanggan yang Marah di Media Sosial", role: "Anda adalah Manajer Krisis Media Sosial.", task: "Berikan 3 langkah yang harus dilakukan tim Anda saat menghadapi keluhan pelanggan yang sangat marah di Twitter/X.", constraint: "Langkah harus fokus pada pemindahan percakapan ke saluran pribadi, kecepatan respons, dan empati.", format: "Daftar bernomor." },
+            { category: "13. Layanan Pelanggan & Pengalaman Pelanggan (CX)", tujuan: "Membuat Panduan Nada Suara (*Tone of Voice*) Pelayanan", role: "Anda adalah Pakar Merek.", task: "Definisikan 5 kata kunci yang mendeskripsikan *Tone of Voice* tim layanan pelanggan Anda (misalnya: Ramah, Efisien, Berpengetahuan, dll.).", constraint: "Jelaskan secara singkat apa arti setiap kata kunci dalam konteks interaksi pelanggan.", format: "Daftar berpoin dengan definisi." },
+            { category: "13. Layanan Pelanggan & Pengalaman Pelanggan (CX)", tujuan: "Sistem Eskalasi Masalah Sederhana", role: "Anda adalah Manajer Operasi.", task: "Buatkan sistem eskalasi 3 tingkat sederhana untuk masalah pelanggan.", constraint: "Tingkat harus mencakup: Agen L1 (Pertanyaan Umum), Spesialis L2 (Masalah Teknis/Tagihan), dan Manajer (Masalah Reputasi/Hukum).", format: "Tabel 3 baris: Tingkat, Jenis Masalah, Target Waktu Respons." },
+            { category: "13. Layanan Pelanggan & Pengalaman Pelanggan (CX)", tujuan: "Template Balasan 'Fitur Belum Tersedia'", role: "Anda adalah Manajer Produk.", task: "Tulis template balasan kepada pelanggan yang meminta fitur produk yang belum dikembangkan.", constraint: "Balasan harus berterima kasih atas ide tersebut, menjelaskan bahwa ide tersebut telah dicatat, dan memberikan solusi atau *workaround* sementara jika ada.", format: "Teks balasan." },
+            { category: "13. Layanan Pelanggan & Pengalaman Pelanggan (CX)", tujuan: "Meningkatkan *Net Promoter Score* (NPS)", role: "Anda adalah Pakar Pemasaran Retensi.", task: "Jelaskan peran *Promoters*, *Passives*, dan *Detractors* dalam skor NPS, dan berikan satu strategi untuk mengubah *Detractors* menjadi *Passives*.", constraint: "Fokus pada tindak lanjut yang spesifik.", format: "Teks penjelasan dan strategi." },
+            { category: "14. Optimasi Corong Penjualan (Funnel)", tujuan: "Memetakan Corong Pemasaran 4 Tahap (AARRR)", role: "Anda adalah Spesialis Metrik Corong Pemasaran.", task: "Petakan corong AARRR (*Acquisition, Activation, Retention, Referral, Revenue*) untuk bisnis SaaS (Software as a Service).", constraint: "Untuk setiap tahap, tentukan 1 metrik kunci dan 1 contoh tindakan pemasaran yang relevan.", format: "Tabel 5 baris dengan Tahap, Metrik Kunci, dan Tindakan Pemasaran." },
+            { category: "14. Optimasi Corong Penjualan (Funnel)", tujuan: "Copy Nurturing untuk Prospek Dingin", role: "Anda adalah *Lead Nurturing Copywriter*.", task: "Tulis 3 baris *copy* email untuk prospek dingin yang baru mengunduh *lead magnet*.", constraint: "*Copy* harus berfokus pada pembangunan kepercayaan, bukan penjualan langsung, dan menanyakan tantangan utama mereka.", format: "Tiga paragraf *copy* email terpisah." },
+            { category: "14. Optimasi Corong Penjualan (Funnel)", tujuan: "Membuat Skrip Video Iklan (TOFU)", role: "Anda adalah Spesialis Iklan Media Sosial (*Top of Funnel*).", task: "Buatkan skrip video iklan 15 detik untuk menarik perhatian prospek yang tidak sadar masalah.", constraint: "Skrip harus menggunakan *Hook* yang kuat (3 detik pertama), menjelaskan masalah universal, dan menawarkan solusi sebagai *bridge* ke *landing page*.", format: "Skrip berurutan (Visual/Audio)." },
+            { category: "14. Optimasi Corong Penjualan (Funnel)", tujuan: "Mengoptimalkan Formulir Opt-in untuk Konversi", role: "Anda adalah Pakar Optimasi Formulir.", task: "Berikan 5 saran untuk mengoptimalkan formulir *opt-in* (langganan newsletter) pada blog.", constraint: "Fokus pada minimalisasi bidang, daya tarik visual, dan kejelasan proposisi nilai.", format: "Daftar berpoin bernomor." },
+            { category: "14. Optimasi Corong Penjualan (Funnel)", tujuan: "Kerangka Studi Kasus yang Memicu Kepercayaan", role: "Anda adalah Penulis Studi Kasus yang Berorientasi Bukti.", task: "Buatkan kerangka studi kasus (minimal 5 bagian) untuk meyakinkan prospek di tahap *Consideration*.", constraint: "Kerangka harus mencakup: Situasi Klien, Masalah/Tantangan, Solusi yang Diterapkan (Anda), Hasil Terukur (Angka/Statistik), dan Testimonial.", format: "Daftar berjenjang." },
+            { category: "14. Optimasi Corong Penjualan (Funnel)", tujuan: "Menganalisis *Leakage* dalam Corong Pembelian", role: "Anda adalah Analis Corong Penjualan.", task: "Identifikasi 3 titik paling umum terjadinya *leakage* (kebocoran/penurunan) dalam corong e-commerce (dari halaman produk ke pembelian) dan sarankan solusi perbaikan.", constraint: "Solusi harus bersifat teknis (misalnya, kecepatan loading) atau psikologis (misalnya, *trust badge*).", format: "Tabel 3 baris: Titik Kebocoran, Masalah Umum, Solusi." },
+            { category: "14. Optimasi Corong Penjualan (Funnel)", tujuan: "Copy CTA (Call-to-Action) Berbasis Niat", role: "Anda adalah Spesialis Bahasa Konversi.", task: "Buatkan 5 variasi tombol CTA yang spesifik untuk halaman yang menjual kursus online.", constraint: "CTA harus menggunakan kata kerja yang kuat dan spesifik (*action verb*) dan mencerminkan manfaat akhir (bukan hanya 'Beli Sekarang').", format: "Daftar berpoin." },
+            { category: "14. Optimasi Corong Penjualan (Funnel)", tujuan: "Skrip Retargeting Iklan (MOFU)", role: "Anda adalah Spesialis Iklan *Middle of Funnel* (MOFU).", task: "Buatkan *copy* iklan retargeting (misalnya, di Facebook/Instagram) untuk prospek yang mengunjungi halaman harga tetapi tidak membeli.", constraint: "*Copy* harus mengatasi 1 keberatan harga umum dan menawarkan *urgency* yang lembut (misalnya, penawaran diskon terbatas).", format: "Teks iklan singkat." },
+            { category: "14. Optimasi Corong Penjualan (Funnel)", tujuan: "Mendefinisikan *Ideal Customer Profile* (ICP) untuk B2B", role: "Anda adalah Analis Penjualan B2B.", task: "Definisikan 5 kriteria utama (ukuran perusahaan, industri, anggaran, dll.) yang membentuk *Ideal Customer Profile* (ICP) untuk layanan `[Jenis Layanan B2B]`.", constraint: "Kriteria harus terukur dan dapat digunakan untuk segmentasi prospek.", format: "Daftar bernomor." },
+            { category: "14. Optimasi Corong Penjualan (Funnel)", tujuan: "Strategi Uji Coba Gratis (*Free Trial*) yang Mengkonversi", role: "Anda adalah Manajer Akuisisi Pengguna.", task: "Berikan 3 tips untuk meningkatkan tingkat konversi dari *Free Trial* ke pelanggan berbayar (strategi *end-of-trial*).", constraint: "Tips harus fokus pada sentuhan personal dan menunjukkan nilai nyata sebelum masa uji coba berakhir.", format: "Daftar berpoin." },
+            { category: "15. Pembuatan Produk Digital & Kursus Online", tujuan: "Kerangka Kurikulum Kursus Online (5 Modul)", role: "Anda adalah Desainer Kurikulum Edukasi Digital.", task: "Buatkan kerangka 5 modul lengkap untuk kursus online yang mengajarkan `[Topik Kursus, misal: Pemasaran TikTok untuk Bisnis Kecil]`.", constraint: "Setiap modul harus memiliki tujuan yang jelas dan 4-5 topik pelajaran yang spesifik.", format: "Daftar berjenjang (Modul -> Topik)." },
+            { category: "15. Pembuatan Produk Digital & Kursus Online", tujuan: "Menentukan Harga Produk Digital (Tingkat Pemula)", role: "Anda adalah Konsultan Monetisasi Produk Digital.", task: "Berikan 3 metode penetapan harga yang direkomendasikan untuk *e-book* pemula berjudul `[Judul E-book]`.", constraint: "Metode harus mencakup: Harga berdasarkan Kompetitor, Harga berdasarkan Nilai yang Dirasakan, dan Harga Perkenalan.", format: "Daftar bernomor dengan Metode dan Rekomendasi Harga (placeholder)." },
+            { category: "15. Pembuatan Produk Digital & Kursus Online", tujuan: "Draft Email Peluncuran Kursus (Jual Manfaat)", role: "Anda adalah *Launch Copywriter*.", task: "Tulis draf email penjualan yang berfokus pada manfaat transformatif dari kursus online Anda.", constraint: "Email harus menggunakan pola *Before & After*, mengidentifikasi rasa sakit audiens, dan diakhiri dengan rasa urgensi yang didasarkan pada jumlah kursi terbatas/batas waktu diskon.", format: "*Subject Line* dan *Body* email lengkap." },
+            { category: "15. Pembuatan Produk Digital & Kursus Online", tujuan: "Membuat 10 Judul Modul yang Menarik (Benefit-Driven)", role: "Anda adalah Pemasar Pendidikan.", task: "Buatkan 10 judul modul/pelajaran yang menarik dan berorientasi manfaat (bukan hanya topik) untuk kursus tentang `[Topik Spesifik Kursus]`.", constraint: "Judul harus spesifik tentang apa yang akan dicapai peserta.", format: "Daftar bernomor." },
+            { category: "15. Pembuatan Produk Digital & Kursus Online", tujuan: "Ide Konten Bonus untuk Meningkatkan Nilai Kursus", role: "Anda adalah Spesialis Peningkatan Nilai Produk.", task: "Berikan 5 ide konten bonus (di luar video pelajaran) untuk ditambahkan ke kursus online Anda.", constraint: "Bonus harus memiliki nilai yang tinggi, seperti template, *checklist*, atau sesi pribadi/grup.", format: "Daftar berpoin." },
+            { category: "15. Pembuatan Produk Digital & Kursus Online", tujuan: "Menulis Deskripsi Halaman Penjualan Produk Digital", role: "Anda adalah Copywriter *Long-Form*.", task: "Tuliskan 3 paragraf bagian 'Siapa yang Akan Mendapatkan Manfaat?' untuk halaman penjualan kursus `[Nama Kursus]`.", constraint: "Paragraf harus secara eksplisit memanggil prospek yang ideal dan mengecualikan orang yang salah (agar konversi lebih akurat).", format: "Tiga paragraf." },
+            { category: "15. Pembuatan Produk Digital & Kursus Online", tujuan: "Kerangka Webinar Penjualan (4 Bagian)", role: "Anda adalah Pelatih Webinar.", task: "Buatkan kerangka 4 bagian utama untuk webinar yang bertujuan untuk menjual produk digital Anda.", constraint: "Kerangka harus mencakup: Hook & Janji Utama, Pengajaran (Value), Transisi ke Penawaran (Pitch), dan Penawaran Khusus (CTA).", format: "Daftar berjenjang (4 bagian utama)." },
+            { category: "15. Pembuatan Produk Digital & Kursus Online", tujuan: "Menangani Keberatan: 'Saya Tidak Punya Waktu'", role: "Anda adalah *Sales Copywriter* yang fokus pada manajemen waktu.", task: "Tulis 3 poin yang menjawab keberatan prospek yang mengatakan 'Saya tidak punya waktu untuk kursus ini.'", constraint: "Jawaban harus berfokus pada efisiensi waktu kursus, dan dampak buruk jika tidak mengambil tindakan sekarang.", format: "Daftar bernomor." },
+            { category: "15. Pembuatan Produk Digital & Kursus Online", tujuan: "Membuat Testimonial yang Berdampak (Template)", role: "Anda adalah Spesialis Bukti Sosial.", task: "Rancang 3 pertanyaan yang harus Anda ajukan kepada pelanggan untuk mendapatkan testimoni yang kuat dan kredibel (berfokus pada transformasi).", constraint: "Pertanyaan harus mendorong jawaban yang menyebutkan masalah *sebelum* dan hasil *setelah* menggunakan produk.", format: "Daftar bernomor." },
+            { category: "15. Pembuatan Produk Digital & Kursus Online", tujuan: "Kerangka Rencana Pemasaran Pra-Peluncuran (Pre-Launch)", role: "Anda adalah Strategis Pemasaran.", task: "Buatkan 5 langkah pra-peluncuran (2-3 minggu sebelum peluncuran) untuk mengumpulkan *waiting list* untuk kursus online baru.", constraint: "Langkah harus mencakup: Pembuatan *Lead Magnet*, Kampanye Media Sosial, dan *Seeding* (menciptakan buzz) di komunitas yang relevan.", format: "Daftar bernomor (1-5)." }
+        ];
+
+        // --- FIREBASE INITIALIZATION & DATA MANAGEMENT ---
+
+        async function initializeFirebase() {
+            try {
+                // Inisialisasi Firebase
+                const app = initializeApp(FIREBASE_CONFIG);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('debug');
+                
+                // Otentikasi
+                if (AUTH_TOKEN) {
+                    await signInWithCustomToken(auth, AUTH_TOKEN);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                // Setelah Auth, siapkan listener Firestore
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        isAuthReady = true;
+                        // Path untuk koleksi publik: /artifacts/{appId}/public/data/prompts/library
+                        // Menyimpan semua prompt dalam satu dokumen 'library'
+                        promptDocRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'prompts', 'library');
+                        setupFirestoreListener();
+                    } else {
+                        console.error('Autentikasi gagal atau tidak ada pengguna.');
+                        document.getElementById('loadingOverlay').innerHTML = '<div class="text-red-600">Gagal memuat: Autentikasi Firebase gagal.</div>';
+                    }
+                });
+
+            } catch (error) {
+                console.error("Kesalahan inisialisasi Firebase:", error);
+                document.getElementById('loadingOverlay').innerHTML = `<div class="text-red-600">Kesalahan: ${error.message}</div>`;
+            }
+        }
+
+        /**
+         * Menyiapkan listener real-time untuk data prompt di Firestore.
+         */
+        function setupFirestoreListener() {
+            if (!isAuthReady || !db || !promptDocRef) return;
+
+            onSnapshot(promptDocRef, (docSnap) => {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+
+                if (docSnap.exists() && docSnap.data().prompts && docSnap.data().prompts.length > 0) {
+                    // Data ditemukan, gunakan data dari database
+                    allPrompts = docSnap.data().prompts;
+                    document.getElementById('dbStatus').innerHTML = `<span class="text-green-600">Database Status: Terhubung dan Data (${allPrompts.length} prompt) dimuat.</span>`;
+                    filterPrompts(); 
+                } else {
+                    // Database kosong, gunakan data awal (bootstrap) dan tampilkan tombol untuk menyimpannya
+                    allPrompts = initialPromptData;
+                    document.getElementById('dbStatus').innerHTML = `
+                        <div class="p-3 bg-yellow-100 border border-yellow-300 rounded-lg text-yellow-800 flex justify-between items-center">
+                            <span>Database kosong. Ingin menyimpan 100 prompt awal sebagai data database Anda?</span>
+                            <button onclick="saveInitialPrompts()" id="saveInitialButton" 
+                                class="bg-yellow-600 text-white py-1 px-3 rounded-md hover:bg-yellow-700 transition duration-150 font-semibold">
+                                Simpan Data Awal ke Database
+                            </button>
+                        </div>
+                    `;
+                    filterPrompts();
+                }
+            }, (error) => {
+                console.error("Error mengambil data Firestore:", error);
+                document.getElementById('dbStatus').innerHTML = `<span class="text-red-600">Gagal mengambil data database: ${error.message}</span>`;
+            });
+        }
+
+        /**
+         * Menyimpan 100 prompt awal ke database untuk bootstrapping.
+         */
+        window.saveInitialPrompts = async function() {
+            if (!promptDocRef || !isAuthReady) {
+                alert('Database belum siap atau Anda belum terautentikasi.');
+                return;
+            }
+            
+            const button = document.getElementById('saveInitialButton');
+            button.disabled = true;
+            button.textContent = 'Menyimpan...';
+
+            try {
+                // Simpan seluruh array promptData ke satu dokumen
+                await setDoc(promptDocRef, { prompts: initialPromptData, createdAt: new Date().toISOString() });
+                
+                // Listener akan otomatis memuat ulang setelah ini, tetapi beri feedback visual
+                document.getElementById('dbStatus').innerHTML = `<span class="text-green-600">Berhasil! 100 prompt awal telah disimpan. Memuat ulang...</span>`;
+
+            } catch (e) {
+                console.error("Error menambahkan dokumen: ", e);
+                document.getElementById('dbStatus').innerHTML = `<span class="text-red-600">Gagal menyimpan data: ${e.message}</span>`;
+                button.disabled = false;
+                button.textContent = 'Coba Lagi';
+            }
+        };
+
+        // --- UI & FILTERING FUNCTIONS (Tidak banyak berubah dari sebelumnya) ---
+
+        /**
+         * Mengisi dropdown filter dengan kategori unik.
+         */
+        function populateCategoryFilter() {
+            const filter = document.getElementById('categoryFilter');
+            // Gunakan data saat ini (bisa dari initialData atau allPrompts)
+            const dataToUse = allPrompts.length > 0 ? allPrompts : initialPromptData;
+            const categories = [...new Set(dataToUse.map(p => p.category))].sort();
+
+            // Clear existing options except the first one (All Categories)
+            while (filter.options.length > 1) {
+                filter.remove(1);
+            }
+
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                // Hitung jumlah prompt per kategori untuk tampilan
+                const count = dataToUse.filter(p => p.category === category).length;
+                option.textContent = `${category} (${count})`;
+                filter.appendChild(option);
+            });
+        }
+
+        /**
+         * Merender daftar prompt ke DOM.
+         * @param {Array} prompts - Array of prompt objects to display.
+         */
+        function renderPrompts(prompts) {
+            const listContainer = document.getElementById('promptList');
+            const resultsCount = document.getElementById('resultsCount');
+            listContainer.innerHTML = '';
+            resultsCount.textContent = prompts.length;
+
+            if (prompts.length === 0) {
+                listContainer.innerHTML = '<p class="col-span-full text-center text-gray-500 mt-8 text-lg">Tidak ada prompt yang cocok dengan kriteria pencarian Anda.</p>';
+                return;
+            }
+
+            prompts.forEach((p, index) => {
+                // Buat atribut data-index untuk memudahkan penyalinan
+                const card = document.createElement('div');
+                card.className = 'bg-white p-5 rounded-xl shadow-lg border-t-4 border-blue-500 flex flex-col justify-between hover:shadow-xl transition-shadow duration-300';
+                card.innerHTML = `
+                    <div>
+                        <span class="text-xs font-semibold uppercase text-blue-500 bg-blue-50 px-2 py-1 rounded-full">${p.category}</span>
+                        <h3 class="text-xl font-bold text-gray-800 mt-2 mb-3">${p.tujuan}</h3>
+                        
+                        <div class="space-y-3 text-sm text-gray-700">
+                            <p class="font-semibold text-gray-900">Peran/Role:</p>
+                            <p class="pl-3 border-l-2 border-yellow-400">${p.role}</p>
+                            
+                            <p class="font-semibold text-gray-900 pt-2">Tugas/Task:</p>
+                            <p class="pl-3 border-l-2 border-green-400">${p.task}</p>
+
+                            <p class="font-semibold text-gray-900 pt-2">Batasan/Constraint:</p>
+                            <p class="pl-3 border-l-2 border-red-400">${p.constraint}</p>
+
+                            <p class="font-semibold text-gray-900 pt-2">Format:</p>
+                            <p class="pl-3 border-l-2 border-purple-400">${p.format}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Copy Button -->
+                    <button data-prompt-index="${index}" 
+                            class="copy-btn mt-5 w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" />
+                          <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z" />
+                        </svg>
+                        Salin Prompt Lengkap
+                    </button>
+                `;
+                listContainer.appendChild(card);
+            });
+
+            // Attach copy event listeners after rendering
+            document.querySelectorAll('.copy-btn').forEach(button => {
+                button.addEventListener('click', copyPrompt);
+            });
+            
+            // Perbarui filter kategori setelah data dimuat
+            populateCategoryFilter();
+        }
+
+        /**
+         * Logika untuk memfilter prompt berdasarkan input pencarian dan filter kategori.
+         */
+        window.filterPrompts = function() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value;
+
+            // Gunakan data global allPrompts yang sudah dimuat dari Firestore
+            const filtered = allPrompts.filter(p => {
+                const searchMatch = (
+                    p.category.toLowerCase().includes(searchInput) ||
+                    p.tujuan.toLowerCase().includes(searchInput) ||
+                    p.role.toLowerCase().includes(searchInput) ||
+                    p.task.toLowerCase().includes(searchInput) ||
+                    p.constraint.toLowerCase().includes(searchInput) ||
+                    p.format.toLowerCase().includes(searchInput)
+                );
+
+                const categoryMatch = categoryFilter === '' || p.category === categoryFilter;
+
+                return searchMatch && categoryMatch;
+            });
+
+            renderPrompts(filtered);
+        }
+
+        /**
+         * Menyalin teks prompt lengkap ke clipboard.
+         */
+        function copyPrompt(event) {
+            const button = event.currentTarget;
+            // Dapatkan index dari elemen DOM yang di-render
+            const promptIndex = Array.from(button.parentNode.parentNode.children).indexOf(button.parentNode);
+            // Ambil prompt dari array data setelah filter
+            const currentFilter = document.getElementById('categoryFilter').value;
+            const currentSearch = document.getElementById('searchInput').value.toLowerCase();
+
+            const filteredPrompts = allPrompts.filter(p => {
+                 const searchMatch = (
+                    p.category.toLowerCase().includes(currentSearch) ||
+                    p.tujuan.toLowerCase().includes(currentSearch) ||
+                    p.role.toLowerCase().includes(currentSearch) ||
+                    p.task.toLowerCase().includes(currentSearch) ||
+                    p.constraint.toLowerCase().includes(currentSearch) ||
+                    p.format.toLowerCase().includes(currentSearch)
+                );
+                const categoryMatch = currentFilter === '' || p.category === currentFilter;
+                return searchMatch && categoryMatch;
+            });
+
+            const p = filteredPrompts[promptIndex];
+            
+            // Reconstruct the full prompt text
+            const fullPromptText = `Role: ${p.role}\nTask: ${p.task}\nConstraint: ${p.constraint}\nFormat: ${p.format}`;
+
+            // Use temporary textarea for copying (iframe limitation workaround)
+            const tempInput = document.createElement('textarea');
+            tempInput.value = fullPromptText;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            // Give visual feedback
+            const originalText = button.textContent;
+            button.textContent = 'Tersalin!';
+            button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            button.classList.add('bg-green-500');
+
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('bg-green-500');
+                button.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            }, 1500);
+        }
+
+        // --- Initialization ---
+        window.onload = function() {
+            initializeFirebase();
+        };
+
+    </script>
+</body>
+</html>

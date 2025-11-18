@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>125 Master Prompt Bisnis (ID)</title>
+    <!-- Muat Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Konfigurasi Tailwind untuk font dan tema -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary': '#4F46E5', // Indigo 600
+                        'primary-dark': '#4338CA', // Indigo 700
+                        'secondary': '#10B981', // Emerald 500
+                        'surface': '#F9FAFB', // Gray 50
+                        'card': '#FFFFFF',
+                        'category-bg': '#E0E7FF', // Indigo 100
+                        'category-text': '#4F46E5',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+        /* Mengatur style default untuk body */
+        body {
+            background-color: theme('colors.surface');
+            font-family: theme('fontFamily.sans');
+        }
+        /* Style untuk scrollbar yang lebih halus (optional, untuk estetika) */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: theme('colors.primary');
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: theme('colors.surface');
+        }
+        /* Style untuk modal */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.6);
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            transition: transform 0.3s ease;
+        }
+    </style>
+</head>
+<body class="antialiased p-4 sm:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 md:mb-12">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">125 Master Prompt Bisnis <span class="text-primary">🚀</span></h1>
+            <p class="text-lg text-gray-500">Koleksi 125 prompt siap pakai untuk meningkatkan strategi pemasaran, produktivitas, dan pertumbuhan digital Anda.</p>
+        </header>
+
+        <!-- Search and Filter Controls (Sticky) -->
+        <div class="bg-card p-4 sm:p-6 rounded-xl shadow-lg mb-8 flex flex-col md:flex-row gap-4 sticky top-0 z-10 border border-gray-100">
+            <!-- Search Input -->
+            <div class="flex-grow">
+                <label for="search-input" class="sr-only">Cari Prompt</label>
+                <div class="relative">
+                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <input type="text" id="search-input" placeholder="Cari berdasarkan judul, peran, atau tugas..." class="w-full py-3 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition duration-150" oninput="filterPrompts()">
+                </div>
+            </div>
+
+            <!-- Category Filter Dropdown -->
+            <div>
+                <label for="category-filter" class="sr-only">Filter Kategori</label>
+                <select id="category-filter" class="w-full md:w-56 py-3 px-4 border border-gray-300 rounded-lg appearance-none bg-white focus:ring-primary focus:border-primary transition duration-150" onchange="filterPrompts()">
+                    <option value="">Semua Kategori (125 Prompts)</option>
+                    <!-- Opsi kategori akan diisi oleh JavaScript -->
+                </select>
+            </div>
+        </div>
+
+        <!-- Prompt List Container -->
+        <div id="prompt-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="text-center p-8 text-gray-500 col-span-full" id="loading-indicator">Memuat daftar 125 prompt...</div>
+        </div>
+
+        <!-- No Results Message -->
+        <div id="no-results" class="hidden text-center p-12 bg-card rounded-xl shadow-lg mt-8 border border-gray-100">
+            <p class="text-xl font-semibold text-gray-700">😢 Tidak Ada Prompt Ditemukan</p>
+            <p class="text-gray-500 mt-2">Coba sesuaikan kata kunci pencarian atau ganti kategori filter Anda.</p>
+        </div>
+
+        <!-- Notification Toast for Copy Success -->
+        <div id="notification" class="fixed bottom-4 right-4 bg-secondary text-white px-4 py-3 rounded-xl shadow-2xl transition-transform transform translate-x-full duration-300 opacity-0 z-30" role="alert">
+            Prompt berhasil disalin ke clipboard!
+        </div>
+
+    </div>
+
+    <!-- Modal Pratinjau Prompt -->
+    <div id="prompt-modal" class="modal-overlay fixed inset-0 hidden items-center justify-center p-4 z-50">
+        <div class="modal-content bg-card w-full max-w-2xl max-h-[90vh] rounded-xl shadow-2xl p-6 transform scale-95 opacity-0 overflow-y-auto">
+            <h3 class="text-2xl font-bold text-gray-900 mb-4" id="modal-title"></h3>
+            <p class="text-sm text-gray-500 mb-4">Ini adalah prompt akhir yang siap disalin ke AI Anda. Anda dapat mengeditnya di bawah ini sebelum menyalin.</p>
+
+            <textarea id="modal-prompt-text" rows="12" class="w-full p-4 border border-gray-300 rounded-lg bg-gray-50 text-gray-800 font-mono text-sm resize-none focus:ring-primary focus:border-primary"></textarea>
+            
+            <div class="flex justify-end gap-3 mt-4">
+                <button onclick="closeModal()" class="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 font-semibold transition duration-150">Tutup</button>
+                <button id="modal-copy-btn" class="px-6 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-primary-dark transition duration-150 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v2"></path></svg>
+                    Salin Prompt
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data internal 125 Master Prompt Bisnis
+        const masterPrompts = [
+            // Pemasaran Konten (1-10)
+            { number: 1, category: "Pemasaran Konten", title: "Ide Konten Kreatif Cepat", role: "Ahli Strategi Konten Instagram", goal: "Membuat 10 ide konten kreatif untuk [Jenis Bisnis] dengan gaya [Gaya Komunikasi].", returnFormat: "Tabel dengan kolom: Nomor, Ide Konten (judul), Format (Reel/Carousel/Story), dan Call-to-Action.", warning: "Menghasilkan ide yang melanggar kebijakan platform atau bersifat clickbait.", context: "Tujuan saya adalah meningkatkan engagement dan pengikut di Instagram untuk bisnis [Jenis Bisnis] saya." },
+            { number: 2, category: "Pemasaran Konten", title: "Analisis Judul Blog SEO", role: "Spesialis SEO dan Copywriter", goal: "Menganalisis 5 judul blog yang saya berikan dan memberi skor SEO dari 1-100, lalu menawarkan 2 revisi untuk setiap judul agar lebih menarik dan ramah SEO.", returnFormat: "Tabel perbandingan dengan kolom: Judul Asli, Skor SEO, Alasan Skor, dan 2 Judul Revisi.", warning: "Menggunakan kata kunci yang tidak relevan dengan [Topik Blog] atau terlalu panjang (>60 karakter).", context: "Saya perlu optimasi judul untuk blog post tentang [Topik Blog] agar menduduki peringkat teratas di Google." },
+            { number: 3, category: "Pemasaran Konten", title: "Skrip Video Pendek Virall", role: "Sutradara Konten Video Pendek", goal: "Membuat skrip berdurasi 30 detik untuk video TikTok/Reels tentang [Topik] dengan struktur HOOK (3 detik pertama), BODY (Penjelasan/Demo), dan CTA.", returnFormat: "Skrip detail dengan timestamp per adegan (misal: 0:00-0:03 HOOK: ...).", warning: "Menggunakan musik atau suara berhak cipta (hanya tunjukkan deskripsi suara yang bebas royalti).", context: "Video ini bertujuan untuk meningkatkan kesadaran merek [Nama Merek] dan menjelaskan manfaat [Fitur Produk]." },
+            { number: 4, category: "Pemasaran Konten", title: "Kalender Konten 7 Hari", role: "Manajer Media Sosial", goal: "Menyusun kalender konten lengkap untuk 7 hari di [Platform Media Sosial] dengan tema [Tema Utama Minggu Ini].", returnFormat: "Tabel dengan kolom: Hari, Topik, Jenis Konten, Caption Singkat, dan Hashtag Relevan (maks 5).", warning: "Membuat konten yang sama untuk hari berturut-turut atau konten yang terlalu promosional.", context: "Saya ingin konsisten posting setiap hari untuk menjaga audiens tetap terlibat." },
+            { number: 5, category: "Pemasaran Konten", title: "Draft Email Newsletter", role: "Spesialis Email Marketing", goal: "Membuat draf email newsletter yang menarik untuk mengumumkan [Pengumuman/Produk Baru] kepada daftar pelanggan saya.", returnFormat: "Email lengkap dengan: Subjek, Preheader, Body (sapaan, pengumuman, manfaat), dan Tombol CTA yang jelas.", warning: "Menggunakan kata-kata yang memicu filter spam (misal: 'GRATIS', 'UANG CEPAT').", context: "Tujuan utama email ini adalah mendorong klik ke halaman produk/acara baru." },
+            { number: 6, category: "Pemasaran Konten", title: "Ide Thread Twitter/X", role: "Ahli Pemasaran Twitter", goal: "Membuat 5 ide thread Twitter/X yang menarik tentang [Topik] untuk membangun otoritas.", returnFormat: "Daftar 5 ide thread, masing-masing dengan kalimat pembuka (hook) dan 3 poin utama.", warning: "Menggunakan bahasa yang terlalu formal atau kaku.", context: "Saya ingin meningkatkan engagement dan otoritas di platform X." },
+            { number: 7, category: "Pemasaran Konten", title: "Optimasi Video YouTube", role: "Spesialis Metadata YouTube", goal: "Membuat judul, deskripsi (200 kata), dan 10 tag kunci untuk video YouTube tentang [Topik Video].", returnFormat: "Judul, Deskripsi, dan Daftar Tag terpisah.", warning: "Menggunakan tag yang menyesatkan (misleading tags).", context: "Video ini harus mudah ditemukan di hasil pencarian YouTube." },
+            { number: 8, category: "Pemasaran Konten", title: "Caption Storytelling Produk", role: "Copywriter Emosional", goal: "Membuat 3 variasi caption storytelling untuk produk [Nama Produk] yang berfokus pada masalah [Masalah Audiens] dan solusi emosional.", returnFormat: "Daftar 3 caption lengkap, masing-masing dengan 3 paragraf (Masalah, Solusi, Panggilan Bertindak).", warning: "Fokus pada fitur produk, bukan manfaat emosionalnya.", context: "Saya ingin audiens merasa terhubung dan langsung melihat nilai produk saya." },
+            { number: 9, category: "Pemasaran Konten", title: "Strategi Konten B2B LinkedIn", role: "Pakar Pemasaran B2B", goal: "Membuat 5 ide postingan profesional untuk LinkedIn tentang [Topik Industri] yang menarik bagi audiens [Jabatan Audiens].", returnFormat: "Daftar 5 ide postingan dengan struktur: HOOK yang Kuat, Poin Edukasi (3), dan Pertanyaan Diskusi.", warning: "Menggunakan emoji berlebihan atau bahasa yang terlalu santai.", context: "Tujuan saya adalah mendapatkan lead berkualitas dari LinkedIn." },
+            { number: 10, category: "Pemasaran Konten", title: "Micro-Copy Pop-up", role: "Copywriter Konversi", goal: "Membuat teks (headline dan body) yang menarik untuk pop-up berlangganan email dengan iming-iming [Lead Magnet].", returnFormat: "Headline (maks 6 kata) dan Body Copy (maks 30 kata) untuk pop-up.", warning: "Menggunakan kata-kata yang membuat pengguna merasa dipaksa (pushy).", context: "Saya ingin meningkatkan tingkat konversi pop-up saya sebesar 5%." },
+
+            // Bisnis Digital (11-20)
+            { number: 11, category: "Bisnis Digital", title: "Analisis Celah Pasar Baru", role: "Konsultan Strategi Bisnis", goal: "Mengidentifikasi 3 celah pasar yang belum dimanfaatkan di industri [Industri Target] dan menyarankan model bisnis digital yang cocok untuk setiap celah.", returnFormat: "Daftar bernomor dengan: Celah Pasar, Mengapa Celah Ada, dan Model Bisnis Digital yang Disarankan.", warning: "Memberi saran pasar yang sudah terlalu jenuh atau membutuhkan modal investasi sangat besar.", context: "Saya ingin meluncurkan startup digital baru tahun depan, jadi saya mencari peluang unik." },
+            { number: 12, category: "Bisnis Digital", title: "Struktur Webinar Penjualan", role: "Perancang Kurikulum & Penjualan", goal: "Membuat struktur agenda 60 menit untuk webinar penjualan tentang [Topik Webinar] yang berujung pada penawaran [Produk/Layanan].", returnFormat: "Kerangka waktu (time-based outline) dengan kolom: Waktu (menit), Tahap (Hook, Body, Offer), dan Poin Kunci.", warning: "Menghabiskan lebih dari 10 menit untuk bagian perkenalan atau offer.", context: "Webinar ini harus fokus pada edukasi dan diakhiri dengan transisi yang mulus ke penjualan." },
+            { number: 13, category: "Bisnis Digital", title: "Validasi Nama Merek", role: "Brand Specialist", goal: "Menghasilkan 10 nama merek/produk untuk [Jenis Produk] dan memberikan evaluasi singkat (1-3 kata) untuk setiap nama dari segi ketersediaan domain (.com) dan daya ingat.", returnFormat: "Tabel dengan kolom: Nama Merek, Ketersediaan Domain (Ya/Tidak), dan Daya Ingat (Tinggi/Sedang/Rendah).", warning: "Membuat nama yang terlalu panjang (>3 kata) atau menggunakan angka/simbol.", context: "Merek ini harus terasa modern, premium, dan mudah diucapkan." },
+            { number: 14, category: "Bisnis Digital", title: "Draft Kebijakan Pengembalian", role: "Penasihat Hukum E-commerce (Template)", goal: "Membuat draf standar untuk Kebijakan Pengembalian Produk untuk toko e-commerce yang menjual [Jenis Produk].", returnFormat: "Teks lengkap dalam format paragraf yang mudah dibaca dengan subjudul (misal: Ketentuan, Jangka Waktu, Prosedur).", warning: "Memberikan nasihat hukum yang bersifat final atau menyebutkan istilah hukum yang sangat spesifik negara (gunakan istilah umum).", context: "Saya menjual [Jenis Produk] dan butuh kebijakan yang adil bagi pelanggan dan melindungi bisnis." },
+            { number: 15, category: "Bisnis Digital", title: "Metrik Kinerja E-commerce", role: "Analis Data E-commerce", goal: "Menyediakan daftar 5 metrik KPI paling penting untuk memonitor kesehatan toko e-commerce [Jenis Produk] serta rumus perhitungannya.", returnFormat: "Daftar bernomor dengan: Nama KPI, Deskripsi Singkat, dan Rumus Perhitungan.", warning: "Menggunakan metrik yang hanya relevan untuk bisnis B2B (fokus pada B2C/e-commerce).", context: "Saya ingin tahu metrik mana yang harus saya pantau setiap hari untuk memastikan pertumbuhan." },
+            { number: 16, category: "Bisnis Digital", title: "Analisis Kompetitor Digital", role: "Analis Intelijen Pasar", goal: "Mengidentifikasi 3 kompetitor utama untuk [Jenis Produk] dan menganalisis strategi konten serta harga mereka.", returnFormat: "Tabel dengan kolom: Kompetitor, Strategi Konten Kunci, dan Rentang Harga.", warning: "Menyebutkan informasi pribadi atau data internal sensitif kompetitor.", context: "Saya ingin tahu apa yang berhasil dilakukan kompetitor terbaik saya." },
+            { number: 17, category: "Bisnis Digital", title: "Kerangka Landing Page", role: "Arsitek Halaman Konversi", goal: "Membuat kerangka bagian (section outline) untuk landing page yang menjual [Produk Digital].", returnFormat: "Daftar urutan bagian (misal: Headline, Testimonial, Fitur, CTA), dengan deskripsi singkat konten setiap bagian.", warning: "Mengabaikan pentingnya elemen social proof (bukti sosial).", context: "Landing page ini harus memaksimalkan tingkat konversi (sales)." },
+            { number: 18, category: "Bisnis Digital", title: "3 Persona Pembeli", role: "Spesialis Target Audiens", goal: "Membuat 3 persona pembeli (Buyer Persona) yang berbeda untuk produk [Nama Produk/Layanan] saya.", returnFormat: "Daftar 3 persona, masing-masing mencakup: Nama, Demografi, Goals/Tujuan, dan Pain Points/Masalah Utama.", warning: "Membuat persona yang terlalu mirip satu sama lain.", context: "Saya perlu menargetkan upaya pemasaran saya ke audiens yang paling tepat." },
+            { number: 19, category: "Bisnis Digital", title: "Pemilihan Saluran Digital", role: "Konsultan Distribusi", goal: "Menganalisis [Jenis Produk] saya dan merekomendasikan 3 saluran distribusi digital paling efektif (misal: Marketplace, Website Sendiri, Afiliasi).", returnFormat: "Daftar 3 Saluran, Alasan Utama Pemilihan, dan Pro/Kontra setiap saluran.", warning: "Merekomendasikan saluran yang membutuhkan investasi teknologi besar dan tidak relevan untuk startup kecil.", context: "Saya harus memilih di mana saya harus fokus menjual produk saya secara online." },
+            { number: 20, category: "Bisnis Digital", title: "Konsep Freemium vs Trial", role: "Strategis Model Bisnis", goal: "Membandingkan pro dan kontra model harga Freemium vs. Uji Coba Gratis (Free Trial) untuk layanan SaaS [Nama Layanan].", returnFormat: "Tabel perbandingan dengan kolom: Model Harga, Kelebihan, dan Kekurangan.", warning: "Tidak menjelaskan risiko 'cannibalization' pada model Freemium.", context: "Saya bingung memilih model terbaik untuk menarik pengguna baru dan mendorong konversi berbayar." },
+
+            // Produktivitas & Manajemen (21-30)
+            { number: 21, category: "Produktivitas & Manajemen", title: "Struktur Rapat Efektif 30 Menit", role: "Fasilitator Rapat", goal: "Membuat agenda detail untuk rapat tim mingguan selama 30 menit mengenai [Topik Rapat] yang menjamin fokus dan keputusan yang terstruktur.", returnFormat: "Daftar waktu (time-based outline) dengan kolom: Waktu (menit), Agenda, dan Hasil yang Diharapkan.", warning: "Mengandung poin agenda yang bisa diselesaikan melalui email atau chat.", context: "Rapat ini harus cepat, fokus pada tindakan (actionable items), dan bukan hanya sekadar laporan." },
+            { number: 22, category: "Produktivitas & Manajemen", title: "Daftar Tugas Harian Prioritas", role: "Asisten Pribadi (PA) Cerdas", goal: "Menganalisis daftar 10 tugas yang saya berikan dan menyusunnya kembali berdasarkan Matriks Eisenhower (Urgent/Important).", returnFormat: "Tabel dengan kolom: Tugas, Kategori Eisenhower (Do, Decide, Delegate, Delete), dan Alasan Prioritas.", warning: "Tidak mengkategorikan semua 10 tugas yang diberikan.", context: "Saya sering kewalahan dengan banyak tugas, jadi saya butuh fokus pada tugas yang benar-benar penting." },
+            { number: 23, category: "Produktivitas & Manajemen", title: "Kerangka Proyek Baru", role: "Manajer Proyek Agile", goal: "Membuat kerangka kerja awal untuk proyek pengembangan [Nama Proyek/Produk] dengan membagi tugas menjadi 5 fase utama (Inisiasi, Perencanaan, Eksekusi, Pemantauan, Penutupan).", returnFormat: "Daftar Fase dan 3-5 sub-tugas kunci di bawah setiap fase.", warning: "Menggunakan terminologi yang sangat teknis atau spesifik industri yang tidak umum (gunakan bahasa manajemen proyek standar).", context: "Saya perlu memulai proyek ini dengan langkah-langkah yang terdefinisi dengan baik." },
+            { number: 24, category: "Produktivitas & Manajemen", title: "Evaluasi Diri Mingguan", role: "Pelatih Kinerja", goal: "Menyusun 5 pertanyaan refleksi yang mendalam untuk evaluasi diri mingguan mengenai kinerja dan tujuan profesional.", returnFormat: "Daftar 5 pertanyaan (pernyataan) yang provokatif dan berorientasi solusi.", warning: "Mengajukan pertanyaan ya/tidak atau pertanyaan yang jawabannya hanya deskriptif, bukan reflektif.", context: "Saya ingin mengubah kebiasaan dan cara kerja saya setiap minggu melalui refleksi yang jujur." },
+            { number: 25, category: "Produktivitas & Manajemen", title: "Mendefinisikan OKR", role: "Spesialis Manajemen Tujuan", goal: "Membuat 3 contoh Objectives and Key Results (OKR) untuk tim [Nama Tim] pada kuartal mendatang.", returnFormat: "Daftar dengan struktur: Objective: [O], Key Result 1: [KR1], Key Result 2: [KR2], Key Result 3: [KR3].", warning: "Membuat Key Results yang tidak terukur (tidak ada angka) atau hanya berupa daftar tugas (bukan hasil).", context: "Tim [Nama Tim] bertujuan untuk [Tujuan Utama Tim]." },
+            { number: 26, category: "Produktivitas & Manajemen", title: "Delegation Framework", role: "Pelatih Kepemimpinan", goal: "Menyediakan kerangka delegasi 5 langkah untuk tugas [Nama Tugas] kepada anggota tim junior.", returnFormat: "Daftar bernomor 5 langkah (misal: Jelaskan Tujuan, Tentukan Batasan, dll.).", warning: "Memberi instruksi yang terlalu mikro (micromanagement).", context: "Saya perlu belajar cara mendelegasikan tugas dengan efektif tanpa mengintervensi." },
+            { number: 27, category: "Produktivitas & Manajemen", title: "Template SOP Dasar", role: "Konsultan Operasional", goal: "Membuat template dasar Standar Operasional Prosedur (SOP) untuk proses [Nama Proses Bisnis].", returnFormat: "Teks SOP dengan sub-bagian: Tujuan, Pihak Bertanggung Jawab, Langkah-Langkah (bernomor), dan Lampiran.", warning: "Menggunakan bahasa yang ambigu atau tidak jelas.", context: "Saya perlu mendokumentasikan proses inti bisnis saya." },
+            { number: 28, category: "Produktivitas & Manajemen", title: "Rencana 90 Hari Posisi Baru", role: "Perencana Karir", goal: "Menyusun rencana 90 hari untuk [Nama Posisi Baru] dengan fokus pada 3 tahap: Belajar, Berkontribusi Cepat, dan Memimpin.", returnFormat: "Tabel 3 kolom: Tahap (Hari 1-30, 31-60, 61-90), Fokus Kunci, dan 3 Tindakan Utama.", warning: "Mengabaikan pentingnya membangun hubungan interpersonal dalam 90 hari pertama.", context: "Saya akan memulai peran baru dan ingin membuat kesan yang kuat dan terencana." },
+            { number: 29, category: "Produktivitas & Manajemen", title: "Daftar Periksa Outsourcing", role: "Penasihat Kemitraan", goal: "Membuat daftar periksa 7 poin yang harus dipertimbangkan sebelum meng-outsourcing fungsi bisnis [Nama Fungsi] ke pihak ketiga.", returnFormat: "Daftar bernomor 7 poin (misal: Keamanan Data, Biaya Jangka Panjang, Kontrak Jelas, dll.).", warning: "Hanya fokus pada biaya, mengabaikan kualitas dan kontrol.", context: "Saya mempertimbangkan untuk menyerahkan [Nama Fungsi] kepada spesialis eksternal." },
+            { number: 30, category: "Produktivitas & Manajemen", title: "Membuat Ringkasan Laporan", role: "Spesialis Komunikasi Eksekutif", goal: "Mengubah laporan panjang [Nama Laporan] menjadi ringkasan eksekutif 1 paragraf yang menyoroti 3 temuan paling penting.", returnFormat: "Ringkasan eksekutif 1 paragraf yang padat informasi.", warning: "Tidak mencantumkan kesimpulan atau implikasi dari temuan.", context: "Saya perlu menyampaikan hasil laporan ini kepada pemangku kepentingan yang sibuk." },
+
+            // Desain & UX (31-40)
+            { number: 31, category: "Desain & UX", title: "Hipotesis Pengujian A/B", role: "Spesialis Optimasi Konversi (CRO)", goal: "Membuat 3 hipotesis pengujian A/B untuk halaman [Nama Halaman] dengan tujuan meningkatkan [Metrik Target] sebesar [Persentase Target].", returnFormat: "Daftar 3 Hipotesis dengan struktur: Jika [Variabel diubah], maka [Metrik Target] akan [Hasil], karena [Alasan/Rasional].", warning: "Memberi saran perubahan yang membutuhkan perombakan total halaman (fokus pada elemen kecil).", context: "Halaman ini memiliki tingkat konversi [Persentase Konversi Saat Ini]%, dan saya ingin meningkatkannya." },
+            { number: 32, category: "Desain & UX", title: "Saran Peningkatan CTA", role: "Pakar User Interface (UI)", goal: "Menawarkan 5 cara inovatif untuk meningkatkan visibilitas dan klik dari tombol Call-to-Action (CTA) di halaman [Nama Halaman] yang berisi [Tujuan Halaman].", returnFormat: "Daftar 5 saran detail mengenai: Penempatan, Warna, Teks, Bentuk, dan Animasi.", warning: "Memberikan saran yang mengganggu pengalaman pengguna (UX) secara drastis (misal: pop-up yang tidak bisa ditutup).", context: "Pengguna tampaknya tidak memperhatikan CTA utama saya, dan saya perlu memperbaikinya." },
+            { number: 33, category: "Desain & UX", title: "Peta Perjalanan Pengguna Dasar", role: "Perancang Pengalaman Pengguna (UX)", goal: "Membuat Peta Perjalanan Pengguna dasar untuk [Jenis Pengguna] yang melakukan [Aksi Kunci/Tujuan] di website saya.", returnFormat: "Tabel dengan kolom: Tahap Perjalanan (misal: Kesadaran, Pertimbangan, Pembelian), Tindakan Pengguna, Emosi, dan Poin Rasa Sakit (Pain Points).", warning: "Mengabaikan tahap 'Pasca-Pembelian' atau hanya fokus pada tahap awal.", context: "Saya perlu memvisualisasikan langkah-langkah pengguna untuk menemukan area yang bisa dioptimalkan." },
+            { number: 34, category: "Desain & UX", title: "Draf Teks Mikro Website", role: "Copywriter UX", goal: "Membuat draf teks mikro (microcopy) untuk 5 elemen umum di website (Tombol Submit, Pesan Error, Tooltip, Placeholder Pencarian, Notifikasi Sukses).", returnFormat: "Daftar bernomor dengan Teks Mikro Asli dan Teks Mikro Revisi, lengkap dengan alasan revisi.", warning: "Menggunakan jargon teknis atau bahasa yang terlalu formal.", context: "Website saya harus terasa ramah, membantu, dan tidak membuat pengguna bingung." },
+            { number: 35, category: "Desain & UX", title: "Review Palet Warna", role: "Psikolog Warna Merek", goal: "Menganalisis palet warna [Warna Utama, Warna Sekunder, Warna Aksen] dan memberikan ulasan tentang pesan psikologis yang disampaikan kepada audiens [Target Audiens].", returnFormat: "Analisis paragraf per warna, ditutup dengan saran penyesuaian untuk mencapai suasana [Suasana Hati yang Diinginkan].", warning: "Menggunakan istilah teknis warna (kode Hex/RGB) tanpa menjelaskan dampaknya secara emosional.", context: "Merek saya ingin menyampaikan kesan [Suasana Hati yang Diinginkan] dan menarik [Target Audiens]." },
+            { number: 36, category: "Desain & UX", title: "Panduan Tone of Voice", role: "Perancang Merek (Brand Designer)", goal: "Menetapkan 3 kata kunci yang mendefinisikan Tone of Voice (ToV) merek [Nama Merek] untuk [Target Audiens], dan contoh penggunaannya.", returnFormat: "Daftar 3 kata kunci ToV dan 2 contoh kalimat yang sesuai untuk setiap kata kunci.", warning: "Memilih kata kunci yang bertentangan atau terlalu umum (misal: 'Baik', 'Keren').", context: "ToV saya harus konsisten di semua saluran komunikasi." },
+            { number: 37, category: "Desain & UX", title: "Review Kejelasan Ikon", role: "Spesialis Aksesibilitas UI", goal: "Menawarkan 5 saran untuk meningkatkan kejelasan dan kegunaan set ikon di aplikasi [Nama Aplikasi].", returnFormat: "Daftar 5 saran berfokus pada: Konsistensi, Ukuran Target Sentuh, dan Label Teks.", warning: "Menyalahkan desain yang sudah ada (fokus pada perbaikan, bukan kritik).", context: "Ikon di aplikasi saya terkadang membingungkan pengguna baru." },
+            { number: 38, category: "Desain & UX", title: "Saran Visual Testimonial", role: "Pakar Trust Building", goal: "Memberi 5 saran kreatif tentang cara menampilkan testimonial pelanggan [Jenis Testimonial, misal: Teks, Video] agar lebih kredibel dan meyakinkan di halaman penjualan.", returnFormat: "Daftar 5 saran (misal: Sertakan foto asli, Tautan ke profil media sosial, dll.).", warning: "Memberikan saran yang melanggar privasi pelanggan (fokus pada izin).", context: "Testimonial saya terlihat palsu, padahal itu asli. Saya perlu membuatnya lebih kredibel." },
+            { number: 39, category: "Desain & UX", title: "Analisis Konsistensi Desain", role: "Auditor Visual", goal: "Mengidentifikasi 5 elemen desain yang paling umum tidak konsisten di website [Nama Website] dan menyarankan perbaikan untuk mencapai kesatuan visual.", returnFormat: "Daftar 5 elemen (misal: Ukuran Font, Spasi, Gaya Tombol) dan 1 saran perbaikan untuk setiap elemen.", warning: "Memberi saran yang bersifat subjektif (fokus pada aturan desain yang mapan).", context: "Website saya terasa berantakan dan tidak profesional." },
+            { number: 40, category: "Desain & UX", title: "Kerangka Desain Responsif", role: "Spesialis Web Mobile", goal: "Membuat kerangka pemikiran (framework) 4 langkah untuk memastikan bahwa desain baru [Nama Fitur] berfungsi sempurna di perangkat mobile.", returnFormat: "Daftar 4 langkah: Mobile-First, Ukuran Target Sentuh, Prioritas Konten, dan Pengujian Lintas Peramban.", warning: "Hanya fokus pada resolusi desktop.", context: "Sebagian besar pengguna saya mengakses website melalui ponsel." },
+
+            // Keuangan & Investasi (41-50) -> Diperluas menjadi 15 (41-55)
+            { number: 41, category: "Keuangan & Investasi", title: "Perbandingan Opsi Pendanaan", role: "Analis Keuangan Startup", goal: "Membandingkan pro dan kontra 3 opsi pendanaan awal (Bootstrapping, Angel Investor, Venture Capital) untuk startup [Jenis Startup] saya.", returnFormat: "Tabel perbandingan dengan kolom: Opsi Pendanaan, Kelebihan (Pros), dan Kekurangan (Cons).", warning: "Menggunakan istilah yang terlalu canggih atau tidak menjelaskan risiko utama kehilangan kontrol.", context: "Saya perlu memutuskan sumber modal terbaik untuk memulai pertumbuhan bisnis saya." },
+            { number: 42, category: "Keuangan & Investasi", title: "Analisis Harga Jual", role: "Konsultan Penetapan Harga", goal: "Menyediakan 3 strategi penetapan harga (Cost-Plus, Value-Based, Competitor-Based) untuk produk [Nama Produk/Layanan] dengan [Biaya Produksi] dan [Harga Kompetitor].", returnFormat: "Daftar Strategi, Deskripsi, dan Estimasi Harga Jual (berdasarkan asumsi).", warning: "Memberikan harga jual tunggal tanpa menjelaskan rasionalisasi di baliknya.", context: "Saya ingin memastikan harga jual saya menghasilkan keuntungan yang sehat sambil tetap kompetitif." },
+            { number: 43, category: "Keuangan & Investasi", title: "Proyeksi Anggaran Pemasaran", role: "Perencana Anggaran Digital", goal: "Membuat kerangka alokasi anggaran pemasaran bulanan senilai [Jumlah Anggaran] untuk 4 saluran utama (Google Ads, Meta Ads, Konten Organik, Email Marketing).", returnFormat: "Tabel Alokasi dengan kolom: Saluran, Persentase Anggaran, dan Jumlah Uang.", warning: "Mengalokasikan 100% anggaran hanya ke satu saluran.", context: "Saya baru memulai dan perlu membagi budget secara efektif di berbagai saluran digital." },
+            { number: 44, category: "Keuangan & Investasi", title: "Risiko Utama Bisnis", role: "Penasihat Mitigasi Risiko", goal: "Mengidentifikasi 5 risiko operasional, keuangan, dan pasar paling utama yang harus dihadapi oleh bisnis [Jenis Bisnis] dan cara mitigasi untuk setiap risiko.", returnFormat: "Daftar bernomor dengan: Jenis Risiko, Deskripsi, dan 1 Tindakan Mitigasi yang Cepat.", warning: "Mengabaikan risiko yang berkaitan dengan perubahan regulasi atau keamanan data.", context: "Saya sedang menyusun rencana bisnis dan perlu memperhitungkan risiko yang mungkin terjadi." },
+            { number: 45, category: "Keuangan & Investasi", title: "Analisis BEP (Break-Even Point)", role: "Analis Keuangan", goal: "Menghitung Break-Even Point (BEP) untuk produk [Nama Produk] dengan asumsi [Biaya Tetap Bulanan], [Biaya Variabel per Unit], dan [Harga Jual per Unit].", returnFormat: "Perhitungan langkah demi langkah: Margin Kontribusi, Formula BEP, dan Hasil Akhir (dalam unit dan rupiah).", warning: "Tidak menyertakan formula yang digunakan untuk perhitungan.", context: "Saya ingin tahu berapa banyak unit yang harus saya jual agar tidak rugi." },
+            { number: 46, category: "Keuangan & Investasi", title: "Analisis Risiko Pemotongan Biaya", role: "Manajer Keuangan Operasional", goal: "Mengidentifikasi 5 area di bisnis [Jenis Bisnis] yang dapat dipotong biayanya, dan risiko operasional dari setiap pemotongan.", returnFormat: "Tabel dengan kolom: Area Biaya, Saran Pemotongan, dan Potensi Risiko Operasional.", warning: "Memberi saran pemotongan gaji karyawan inti.", context: "Saya perlu mengurangi biaya operasional tanpa merusak kualitas produk." },
+            { number: 47, category: "Keuangan & Investasi", title: "Pertanyaan Kunci Due Diligence", role: "Penasihat Merger & Akuisisi (M&A)", goal: "Menyusun 10 pertanyaan kunci yang harus saya ajukan kepada perusahaan target [Nama Perusahaan Target] selama fase due diligence keuangan.", returnFormat: "Daftar 10 pertanyaan terfokus pada: Arus Kas, Utang, dan Proyeksi Pendapatan.", warning: "Mengajukan pertanyaan yang bersifat umum (fokus pada keuangan).", context: "Saya sedang mempertimbangkan mengakuisisi [Nama Perusahaan Target]." },
+            { number: 48, category: "Keuangan & Investasi", title: "Penghitungan LTV & CAC", role: "Analis Metrik Pertumbuhan", goal: "Menjelaskan cara menghitung Customer Lifetime Value (LTV) dan Customer Acquisition Cost (CAC) untuk layanan [Jenis Layanan] saya, dan interpretasi hasilnya.", returnFormat: "Rumus perhitungan LTV dan CAC yang jelas, diikuti dengan 3 paragraf interpretasi hasil.", warning: "Mengabaikan pentingnya rasio LTV:CAC untuk profitabilitas.", context: "Saya ingin memahami seberapa sehat model bisnis langganan saya." },
+            { number: 49, category: "Keuangan & Investasi", title: "Proyeksi Kas Jangka Pendek", role: "Spesialis Arus Kas", goal: "Membuat kerangka 4 minggu untuk memproyeksikan arus kas bisnis [Jenis Bisnis] dengan mempertimbangkan 3 sumber pemasukan utama dan 3 jenis pengeluaran utama.", returnFormat: "Tabel 4 minggu dengan kolom: Minggu, Pemasukan Total, Pengeluaran Total, dan Saldo Akhir.", warning: "Menggunakan asumsi pemasukan dan pengeluaran yang tidak realistis (terlalu optimis).", context: "Saya perlu mengelola uang tunai dengan hati-hati dalam jangka pendek untuk menghindari masalah likuiditas." },
+            { number: 50, category: "Keuangan & Investasi", title: "Evaluasi Alat Akuntansi", role: "Konsultan Sistem Keuangan", goal: "Membandingkan 3 perangkat lunak akuntansi populer (misal: Zahir, Jurnal, Xero) berdasarkan fitur, harga, dan kemudahan penggunaan untuk bisnis [Ukuran Bisnis] di Indonesia.", returnFormat: "Tabel Perbandingan dengan 3 perangkat lunak sebagai baris dan 3 kriteria sebagai kolom.", warning: "Tidak menyebutkan opsi yang berfokus pada pasar Indonesia.", context: "Saya mencari perangkat lunak akuntansi yang cocok untuk bisnis kecil saya." },
+            { number: 51, category: "Keuangan & Investasi", title: "Perencanaan Modal Kerja", role: "Perencana Likuiditas", goal: "Menyusun kerangka 3 langkah untuk menganalisis dan merencanakan modal kerja (working capital) yang optimal untuk bisnis ritel [Jenis Ritel].", returnFormat: "Daftar 3 langkah: Analisis Siklus Konversi Kas, Proyeksi Kebutuhan Dana, dan Opsi Pembiayaan Jangka Pendek.", warning: "Mengabaikan risiko piutang macet.", context: "Saya ingin memastikan bisnis saya memiliki cukup uang tunai untuk operasional sehari-hari." },
+            { number: 52, category: "Keuangan & Investasi", title: "Model Valuasi Sederhana", role: "Analis Penilaian Startup", goal: "Menjelaskan 3 metode valuasi sederhana (misal: Berdasarkan Pendapatan, Berdasarkan Laba, Berdasarkan Faktor) untuk startup tahap awal [Jenis Startup].", returnFormat: "Daftar 3 metode, deskripsi singkat, dan kapan waktu terbaik menggunakan metode tersebut.", warning: "Memberikan angka valuasi yang konkret tanpa data input yang jelas.", context: "Saya perlu mengetahui perkiraan valuasi startup saya sebelum berbicara dengan investor." },
+            { number: 53, category: "Keuangan & Investasi", title: "Draft Proposal Investasi", role: "Penulis Dokumen Pitch", goal: "Membuat kerangka 7 bagian utama untuk proposal investasi (pitch deck) yang menarik bagi Angel Investor.", returnFormat: "Daftar 7 bagian (misal: Masalah, Solusi, Tim, Pasar, Model Bisnis, Keuangan, Permintaan Dana) dengan fokus konten per bagian.", warning: "Fokus berlebihan pada detail teknis produk, mengabaikan peluang pasar.", context: "Saya akan melakukan presentasi investasi pertama saya dan butuh kerangka yang kuat." },
+            { number: 54, category: "Keuangan & Investasi", title: "Strategi Pengelolaan Utang", role: "Konsultan Manajemen Utang", goal: "Menyediakan 3 strategi untuk mengelola dan mengurangi utang bisnis [Jenis Bisnis] secara efektif, dengan fokus pada utang berbunga tinggi.", returnFormat: "Daftar 3 strategi: Debt Consolidation, Snowball Method, Prioritas Utang Operasional.", warning: "Memberi saran yang melanggar perjanjian kredit yang sudah ada.", context: "Saya ingin mengurangi beban utang dan meningkatkan margin keuntungan." },
+            { number: 55, category: "Keuangan & Investasi", title: "Perencanaan Pajak Bisnis Kecil", role: "Penasihat Kepatuhan Pajak", goal: "Mengidentifikasi 5 area perencanaan pajak utama yang harus diperhatikan oleh UMKM [Jenis UMKM] untuk meminimalkan kewajiban pajak secara legal.", returnFormat: "Daftar 5 area (misal: Pencatatan Biaya Operasional, Klaim Beban, Pajak Penghasilan Akhir, dll.)", warning: "Memberi saran penghindaran pajak yang melanggar hukum.", context: "Saya perlu memastikan bisnis kecil saya patuh pajak sambil memaksimalkan penghematan." },
+
+            // Penjualan & CRM (56-65) - Dinomori ulang (51-60 -> 56-65)
+            { number: 56, category: "Penjualan & CRM", title: "Skrip Panggilan Dingin", role: "Pelatih Penjualan B2B", goal: "Membuat skrip 30 detik untuk panggilan dingin (cold call) ke [Jabatan Target] di industri [Industri Target] untuk menjual [Produk/Layanan].", returnFormat: "Skrip dengan bagian: Pembuka (Hook), Kualifikasi (Pain Point), dan CTA (Appointment).", warning: "Menggunakan taktik penjualan yang agresif atau manipulatif.", context: "Saya ingin meningkatkan rasio keberhasilan dalam penjadwalan pertemuan pertama." },
+            { number: 57, category: "Penjualan & CRM", title: "Menangani Keberatan Harga", role: "Strategi Negosiasi", goal: "Menyediakan 3 teknik efektif untuk menangani keberatan umum pelanggan, yaitu 'Harga Anda Terlalu Mahal' untuk [Produk/Layanan].", returnFormat: "Daftar 3 teknik (misal: Value Stacking, Break Down Cost, dll.) beserta contoh kalimat balasan.", warning: "Hanya menawarkan diskon sebagai satu-satunya solusi.", context: "Keberatan harga adalah penghalang terbesar dalam proses penjualan saya." },
+            { number: 58, category: "Penjualan & CRM", title: "Proses Onboarding Pelanggan", role: "Spesialis Customer Success", goal: "Membuat daftar langkah-langkah onboarding (penerimaan) pelanggan baru setelah mereka membeli [Produk Berlangganan/SaaS].", returnFormat: "Daftar 5 langkah utama: Mulai dari Pembayaran hingga Sukses Pertama (First Success).", warning: "Mengabaikan pentingnya komunikasi tindak lanjut (follow-up).", context: "Pelanggan saya sering churn (berhenti berlangganan) di bulan pertama." },
+            { number: 59, category: "Penjualan & CRM", title: "Taktik Upselling/Cross-selling", role: "Ahli Retensi Pelanggan", goal: "Menyediakan 3 taktik upselling dan 3 taktik cross-selling untuk pelanggan yang baru saja membeli [Produk A].", returnFormat: "Daftar 6 taktik terpisah (3 Upsell, 3 Cross-sell) dengan contoh produk/layanan yang disarankan.", warning: "Memberi saran taktik yang mengganggu atau terasa memaksa.", context: "Saya ingin meningkatkan Average Order Value (AOV) dari setiap pelanggan." },
+            { number: 60, category: "Penjualan & CRM", title: "Skrip Chatbot Pra-Penjualan", role: "Perancang Conversational AI", goal: "Membuat skrip 4 langkah untuk chatbot pra-penjualan yang mengkualifikasi lead (calon pelanggan) untuk [Produk/Layanan].", returnFormat: "Skrip dialog (Chatbot: Pertanyaan, Pengguna: Jawaban, Chatbot: Tindak Lanjut).", warning: "Mengajukan lebih dari 5 pertanyaan sebelum mengarahkan ke agen manusia.", context: "Saya ingin mengotomatisasi kualifikasi lead di website saya 24/7." },
+            { number: 61, category: "Penjualan & CRM", title: "Strategi Penguatan Hubungan", role: "Manajer Hubungan Pelanggan (CRM)", goal: "Mengembangkan 5 strategi komunikasi yang non-penjualan untuk memperkuat hubungan dengan pelanggan loyal [Jenis Pelanggan].", returnFormat: "Daftar 5 strategi (misal: Konten Eksklusif, Kartu Ucapan Pribadi, Akses Beta Produk, dll.).", warning: "Hanya fokus pada diskon atau insentif finansial.", context: "Pelanggan setia saya adalah aset terbesar, saya perlu menjaga mereka tetap terikat emosional." },
+            { number: 62, category: "Penjualan & CRM", title: "Pembuatan Laporan Sales Pipeline", role: "Analis Penjualan", goal: "Membuat struktur laporan mingguan untuk Sales Pipeline yang mencakup 5 metrik kunci dan definisi statusnya.", returnFormat: "Struktur laporan dengan kolom: Tahap Pipeline, Definisi Status, dan Metrik Kunci (misal: Konversi, Nilai, Jumlah Lead).", warning: "Menggunakan istilah pipeline yang terlalu spesifik untuk industri yang sangat niche.", context: "Manajer saya membutuhkan laporan yang jelas dan terstruktur setiap Senin pagi." },
+            { number: 63, category: "Penjualan & CRM", title: "Email Follow-up Setelah Demo", role: "Spesialis Komunikasi Penjualan", goal: "Menyusun 3 variasi email follow-up yang efektif dan singkat setelah presentasi produk/demo [Nama Produk/Demo].", returnFormat: "3 draf email terpisah, masing-masing berfokus pada: Ringkasan Nilai, Mengatasi Keberatan, dan CTA Penutup (Closing).", warning: "Menggunakan subjek email yang terasa mendesak atau spam.", context: "Saya ingin email tindak lanjut saya terasa profesional dan berorientasi nilai." },
+            { number: 64, category: "Penjualan & CRM", title: "Kerangka Kualifikasi Lead BANT", role: "SDR (Sales Development Rep)", goal: "Membuat daftar 4-5 pertanyaan kunci berdasarkan kerangka BANT (Budget, Authority, Need, Timeline) untuk layanan [Nama Layanan] saya.", returnFormat: "Daftar pertanyaan yang jelas dikategorikan di bawah B, A, N, dan T.", warning: "Mengajukan pertanyaan yang bersifat menginterogasi atau invasif.", context: "Saya perlu mengkualifikasi lead dengan cepat untuk memastikan mereka cocok dengan layanan premium saya." },
+            { number: 65, category: "Penjualan & CRM", title: "Poin Penting SLA Penjualan", role: "Manajer Operasi Penjualan", goal: "Mengidentifikasi 5 poin penting yang harus dimasukkan dalam Service Level Agreement (SLA) antara tim Penjualan dan tim Dukungan/Customer Success.", returnFormat: "Daftar 5 poin penting yang terukur (misal: Waktu Respons, Kualitas Lead, Prosedur Serah Terima).", warning: "Membuat poin yang tidak dapat diukur atau terlalu bergantung pada asumsi.", context: "Saya ingin memastikan transisi lead dari penjualan ke dukungan berjalan mulus dan terukur." },
+
+            // SDM & Perekrutan (66-75) - Dinomori ulang (61-70 -> 66-75)
+            { number: 66, category: "SDM & Perekrutan", title: "Kerangka Deskripsi Pekerjaan", role: "Konsultan HR", goal: "Membuat kerangka deskripsi pekerjaan untuk posisi [Nama Posisi] dengan fokus pada hasil dan bukan hanya tugas.", returnFormat: "Daftar sub-bagian: Ringkasan Posisi, Tanggung Jawab (3-5 poin, berorientasi hasil), Kualifikasi Wajib, dan Budaya Kerja.", warning: "Menggunakan bahasa yang bersifat diskriminatif atau terlalu berlebihan.", context: "Saya ingin menarik kandidat berkualitas tinggi yang mengerti dampak pekerjaan mereka." },
+            { number: 67, category: "SDM & Perekrutan", title: "Pertanyaan Wawancara Perilaku", role: "Pakar Akuisisi Bakat (Talent Acquisition)", goal: "Menyusun 5 pertanyaan wawancara perilaku (Behavioral Questions - STAR) untuk menilai [Keterampilan Kunci] pada calon karyawan.", returnFormat: "Daftar 5 pertanyaan yang dimulai dengan 'Ceritakan tentang saat...' atau sejenisnya.", warning: "Mengajukan pertanyaan yang jawabannya hanya ya/tidak.", context: "Saya ingin menilai bagaimana kandidat bereaksi terhadap situasi nyata di masa lalu." },
+            { number: 68, category: "SDM & Perekrutan", title: "Skema Umpan Balik Karyawan", role: "Pelatih Kinerja", goal: "Membuat skema 4 langkah untuk memberikan umpan balik (feedback) yang konstruktif dan memotivasi tentang [Isu Kinerja Karyawan].", returnFormat: "Daftar 4 langkah: Data/Observasi, Dampak, Dengar, Rencana Tindakan.", warning: "Menggunakan bahasa menyalahkan atau tidak fokus pada perilaku (bukan kepribadian).", context: "Saya perlu menyampaikan kritik kinerja secara positif kepada anggota tim saya." },
+            { number: 69, category: "SDM & Perekrutan", title: "Draf Kebijakan WFH/Hybrid", role: "Penasihat Kebijakan Karyawan", goal: "Membuat draf sederhana untuk kebijakan Work From Home (WFH) atau Hybrid untuk tim [Nama Tim] yang menetapkan ekspektasi komunikasi dan ketersediaan.", returnFormat: "Draf kebijakan dengan sub-bagian: Fleksibilitas, Komunikasi Inti, dan Pertemuan Wajib Tatap Muka.", warning: "Membuat kebijakan yang tidak mempertimbangkan undang-undang ketenagakerjaan setempat (gunakan istilah umum).", context: "Kami beralih ke model kerja hybrid dan butuh aturan yang jelas." },
+            { number: 70, category: "SDM & Perekrutan", title: "Strategi Retensi Talenta", role: "Ahli Keterlibatan Karyawan", goal: "Menyediakan 5 ide untuk meningkatkan retensi dan moral karyawan inti di bisnis [Jenis Bisnis] saya.", returnFormat: "Daftar 5 ide (misal: Program Mentor, Fleksibilitas Waktu, Jalur Karir Jelas, dll.).", warning: "Memberi saran yang hanya berfokus pada kompensasi finansial (gaji/bonus).", context: "Karyawan terbaik saya mulai meninggalkan perusahaan karena kurangnya peluang." },
+            { number: 71, category: "SDM & Perekrutan", title: "Analisis Kebutuhan Pelatihan", role: "Spesialis Pengembangan SDM", goal: "Membuat kerangka 3 tahap (Identifikasi, Perancangan, Evaluasi) untuk menganalisis kebutuhan pelatihan tim [Nama Tim] berdasarkan [Kesenjangan Keterampilan].", returnFormat: "Daftar bernomor 3 tahap, masing-masing dengan 3 sub-tugas kunci.", warning: "Merekomendasikan pelatihan yang sangat mahal dan tidak terukur hasilnya.", context: "Tim saya perlu meningkatkan [Kesenjangan Keterampilan] untuk mencapai tujuan baru." },
+            { number: 72, category: "SDM & Perekrutan", title: "Draf Surat Tawaran Kerja", role: "Manajer Perekrutan", goal: "Membuat draf standar Surat Tawaran Kerja (Offering Letter) untuk posisi [Nama Posisi] yang mencakup 5 poin penting: Kompensasi, Tanggal Mulai, Manfaat, dan Ketentuan Kerahasiaan.", returnFormat: "Teks formal surat dengan 5 sub-bagian yang jelas.", warning: "Menggunakan bahasa yang tidak profesional atau ambigu tentang kompensasi.", context: "Saya ingin membuat tawaran yang jelas dan menarik bagi kandidat terbaik." },
+            { number: 73, category: "SDM & Perekrutan", title: "Kerangka Rapat 1-on-1", role: "Pelatih Kepemimpinan", goal: "Menyusun kerangka agenda 30 menit untuk rapat 1-on-1 mingguan dengan anggota tim, berfokus pada Kinerja, Hambatan, dan Pengembangan Karir.", returnFormat: "Daftar waktu 4 bagian (misal: Cek-in, Update Proyek, Hambatan, Pengembangan Diri) dengan alokasi waktu per bagian.", warning: "Mengubah rapat ini menjadi hanya laporan status proyek.", context: "Rapat 1-on-1 saya sering tidak fokus dan tidak produktif." },
+            { number: 74, category: "SDM & Perekrutan", title: "Strategi Onboarding Budaya", role: "Spesialis Budaya Perusahaan", goal: "Membuat 5 ide kegiatan informal dalam 30 hari pertama untuk mengenalkan budaya dan nilai-nilai perusahaan kepada karyawan baru.", returnFormat: "Daftar 5 ide kegiatan, lengkap dengan nilai perusahaan yang diwakili oleh kegiatan tersebut.", warning: "Menyarankan kegiatan yang terlalu memakan waktu atau tidak inklusif.", context: "Karyawan baru saya kesulitan beradaptasi dengan budaya perusahaan yang unik." },
+            { number: 75, category: "SDM & Perekrutan", title: "Kerangka Evaluasi 360 Derajat", role: "Analis Kinerja", goal: "Membuat 5 pertanyaan kunci untuk dimasukkan dalam kerangka Evaluasi Kinerja 360 Derajat untuk menilai [Aspek Kinerja].", returnFormat: "Daftar 5 pertanyaan yang dapat diajukan kepada rekan kerja, atasan, dan bawahan.", warning: "Mengajukan pertanyaan yang bersifat pribadi atau tidak dapat diukur secara objektif.", context: "Saya ingin mendapatkan pandangan yang holistik tentang kinerja setiap karyawan." },
+
+            // Layanan Pelanggan (76-85) - Dinomori ulang (71-80 -> 76-85)
+            { number: 76, category: "Layanan Pelanggan", title: "Template Balasan Komplain Sosmed", role: "Spesialis Komunikasi Krisis", goal: "Menyusun 3 template balasan cepat dan empatik untuk komplain pelanggan yang dipublikasikan di media sosial mengenai [Jenis Masalah].", returnFormat: "3 Template balasan (1 Singkat/Publik, 1 Ajakan DM, 1 Solusi Cepat) dengan struktur Empati-Solusi-Tindak Lanjut.", warning: "Mengambil sisi defensif atau menyalahkan pelanggan.", context: "Saya ingin menunjukkan bahwa merek saya peduli dan merespons dengan cepat di mata publik." },
+            { number: 77, category: "Layanan Pelanggan", title: "Panduan Eskalasi Masalah CS", role: "Manajer Operasional CS", goal: "Membuat panduan langkah-langkah standar untuk eskalasi masalah pelanggan yang tidak dapat diselesaikan oleh agen tingkat pertama (Tier 1).", returnFormat: "Daftar 4 langkah eskalasi: Kriteria Eskalasi, Pihak yang Bertanggung Jawab (Tier 2/3), Waktu Respons Target, dan Dokumentasi.", warning: "Membuat prosedur yang terlalu lambat atau melibatkan terlalu banyak orang.", context: "Saya perlu memastikan masalah serius ditangani oleh orang yang tepat dengan cepat." },
+            { number: 78, category: "Layanan Pelanggan", title: "Skrip Menenangkan Pelanggan Marah", role: "Pelatih Keterampilan Interpersonal", goal: "Menyusun skrip dialog 5 langkah (Verbal) untuk menenangkan pelanggan yang marah di telepon, berfokus pada empati dan validasi.", returnFormat: "Skrip berurutan dengan Tahap dan Contoh Kalimat (misal: 1. Mendengar Aktif: 'Saya mengerti, ini pasti membuat Anda frustrasi').", warning: "Memotong ucapan pelanggan atau menjanjikan sesuatu yang tidak bisa ditepati.", context: "Agen saya sering kesulitan ketika menghadapi emosi pelanggan yang tinggi." },
+            { number: 79, category: "Layanan Pelanggan", title: "Metrik Utama Kinerja CS", role: "Analis Metrik Dukungan", goal: "Menyediakan daftar 5 metrik KPI paling penting untuk memonitor kinerja tim Layanan Pelanggan dan mengapa metrik tersebut penting.", returnFormat: "Tabel 5 baris dengan kolom: Nama KPI (misal: CSAT), Definisi, dan Mengapa Penting.", warning: "Menggunakan metrik yang hanya relevan untuk tim penjualan (fokus pada retensi dan kepuasan).", context: "Saya ingin mengukur dampak nyata dari tim layanan pelanggan saya pada bisnis." },
+            { number: 80, category: "Layanan Pelanggan", title: "Sistem Pengumpulan Feedback", role: "Desainer Pengalaman Pelanggan (CX)", goal: "Membuat 4 pertanyaan survei kepuasan singkat (maks 5 kata per pertanyaan) yang efektif untuk dikirim segera setelah interaksi dukungan pelanggan.", returnFormat: "Daftar 4 pertanyaan tertutup (pilihan ganda) dan 1 pertanyaan terbuka.", warning: "Mengajukan pertanyaan yang bias atau terlalu panjang.", context: "Saya ingin mendapatkan umpan balik yang jujur tanpa membebani pelanggan." },
+            { number: 81, category: "Layanan Pelanggan", title: "Memperkirakan Biaya Dukungan", role: "Analis Keuangan CS", goal: "Menjelaskan cara menghitung Biaya Dukungan Pelanggan per Interaksi (Cost Per Contact) untuk tim [Nama Tim CS] dan cara interpretasi hasilnya.", returnFormat: "Rumus perhitungan jelas (Biaya Total CS / Jumlah Interaksi) diikuti dengan 3 implikasi hasil.", warning: "Mengabaikan biaya tersembunyi seperti pelatihan dan teknologi.", context: "Saya perlu membenarkan investasi dalam tim CS dengan data biaya yang jelas." },
+            { number: 82, category: "Layanan Pelanggan", title: "Strategi Meminta Review Positif", role: "Spesialis Reputasi Merek", goal: "Menyediakan 3 skenario waktu terbaik untuk meminta ulasan (review) positif dari pelanggan untuk [Platform Review] dan 2 contoh kalimat permintaan.", returnFormat: "Daftar 3 skenario waktu (misal: Setelah 'Sukses Pertama', Setelah Pembelian Berulang, dll.) dan 2 contoh kalimat permintaan.", warning: "Meminta ulasan secara eksplisit di awal atau saat pelanggan sedang komplain.", context: "Saya ingin meningkatkan skor ulasan saya di [Platform Review]." },
+            { number: 83, category: "Layanan Pelanggan", title: "Analisis Alasan Churn", role: "Analis Retensi", goal: "Membuat daftar 5 pertanyaan wawancara pasca-churn (exit interview) yang harus diajukan kepada pelanggan yang berhenti berlangganan [Produk Berlangganan].", returnFormat: "Daftar 5 pertanyaan yang fokus pada: Nilai, Pesaing, dan Fitur yang Hilang.", warning: "Mengajukan pertanyaan yang bersifat menyalahkan pelanggan.", context: "Saya perlu mengumpulkan data yang jujur mengapa pelanggan berhenti menggunakan layanan saya." },
+            { number: 84, category: "Layanan Pelanggan", title: "Prosedur Penanganan Refund", role: "Manajer Operasional CS", goal: "Membuat prosedur langkah-demi-langkah (5 langkah) untuk memproses permintaan pengembalian dana (refund) dari pelanggan [Jenis Produk] secara efisien.", returnFormat: "Daftar 5 langkah dengan kriteria verifikasi dan perkiraan waktu pemprosesan.", warning: "Membuat prosedur yang sangat panjang dan birokratis.", context: "Saya ingin proses refund yang cepat, adil, dan transparan." },
+            { number: 85, category: "Layanan Pelanggan", title: "Draf Respons FAQ Teknis", role: "Penulis Bantuan Teknis", goal: "Membuat draf respons 3 langkah untuk FAQ umum yang bersifat teknis ('Bagaimana cara mengintegrasikan X dengan Y?') untuk [Target Audiens].", returnFormat: "Draf respons yang mencakup: Verifikasi Masalah, Solusi Langkah Demi Langkah (bernomor), dan Panggilan Bantuan (CTA Support).", warning: "Menggunakan jargon teknis yang tidak dapat dipahami oleh pengguna non-teknis.", context: "FAQ saya saat ini terlalu teknis dan menakutkan pengguna." },
+
+            // Hukum & Legalitas Bisnis (86-90) - Dinomori ulang (81-85 -> 86-90)
+            { number: 86, category: "Hukum & Legalitas Bisnis", title: "Checklist Perlindungan Data", role: "Penasihat Kepatuhan Data", goal: "Menyusun 5 langkah dasar untuk memastikan bisnis [Jenis Bisnis] mematuhi prinsip-prinsip perlindungan data pribadi (mengacu pada UU ITE/umum).", returnFormat: "Daftar 5 langkah: Kebijakan Privasi Jelas, Izin (Consent) Pengguna, Keamanan Penyimpanan Data, dan Prosedur Penghapusan Data.", warning: "Memberi saran yang memerlukan investasi besar tanpa relevansi untuk bisnis kecil.", context: "Saya ingin bisnis saya aman dan mematuhi peraturan privasi data dasar." },
+            { number: 87, category: "Hukum & Legalitas Bisnis", title: "Draf Sederhana NDA", role: "Spesialis Dokumen Kontrak", goal: "Membuat draf sederhana untuk Surat Perjanjian Kerahasiaan (NDA) satu arah untuk melindungi [Jenis Informasi] yang dibagikan kepada [Pihak Penerima].", returnFormat: "Teks NDA dasar dengan 4 bagian: Pihak Terlibat, Definisi Rahasia, Kewajiban Kerahasiaan, dan Jangka Waktu.", warning: "Memberikan nasihat hukum yang kompleks atau final.", context: "Saya akan mempresentasikan ide startup saya kepada calon investor dan butuh NDA cepat." },
+            { number: 88, category: "Hukum & Legalitas Bisnis", title: "Poin Penting Kontrak Vendor", role: "Auditor Kontrak Bisnis", goal: "Mengidentifikasi 5 poin paling penting yang harus ditinjau dan dinegosiasikan dalam kontrak vendor [Jenis Layanan Vendor] untuk melindungi bisnis.", returnFormat: "Daftar 5 poin: Lingkup Layanan Jelas, Ketentuan Pembayaran dan Penalti, Klausul Pemutusan Kontrak, Kepemilikan Kekayaan Intelektual, dan Ganti Rugi.", warning: "Mengabaikan pentingnya klausul pemutusan kontrak yang jelas.", context: "Saya akan menandatangani kontrak besar dengan vendor teknologi baru." },
+            { number: 89, category: "Hukum & Legalitas Bisnis", title: "Syarat & Ketentuan E-commerce", role: "Penasihat Kebijakan Web", goal: "Membuat kerangka 5 bagian untuk Syarat dan Ketentuan (T&C) dasar untuk toko E-commerce yang menjual [Jenis Produk].", returnFormat: "Daftar 5 bagian: Penggunaan Situs Web, Ketentuan Pembelian, Pembayaran dan Pengiriman, Kebijakan Pengembalian, dan Hukum yang Berlaku.", warning: "Menyertakan klausul yang jelas-jelas tidak adil bagi konsumen.", context: "Saya perlu T&C dasar sebelum meluncurkan toko online saya." },
+            { number: 90, category: "Hukum & Legalitas Bisnis", title: "Struktur Dasar Perseroan Terbatas", role: "Konsultan Pendirian Badan Hukum", goal: "Menjelaskan 5 poin struktural dan persyaratan dasar yang harus dipenuhi saat mendirikan Perseroan Terbatas (PT) di Indonesia.", returnFormat: "Daftar 5 poin: Modal Dasar, Akta Pendirian, Susunan Direksi/Komisaris, NPWP Badan, dan Domisili Usaha.", warning: "Memberikan data biaya legalitas yang bersifat fluktuatif (fokus pada persyaratan, bukan biaya).", context: "Saya ingin mengubah bisnis individu saya menjadi PT resmi." },
+
+            // Inovasi & Riset Produk (91-100) - Dinomori ulang (86-95 -> 91-100)
+            { number: 91, category: "Inovasi & Riset Produk", title: "Kerangka Riset Pasar Kualitatif", role: "Peneliti UX (UX Researcher)", goal: "Membuat kerangka 5 pertanyaan wawancara mendalam untuk riset pasar kualitatif yang bertujuan memahami 'Mengapa' pengguna melakukan [Aksi Kunci].", returnFormat: "Daftar 5 pertanyaan terbuka yang mendorong cerita (storytelling) dan bukan jawaban ya/tidak.", warning: "Mengajukan pertanyaan yang bersifat bias (leading questions).", context: "Saya perlu memahami motivasi mendalam pengguna saya." },
+            { number: 92, category: "Inovasi & Riset Produk", title: "Ide Fitur Baru dari Masalah", role: "Product Designer", goal: "Menganalisis 3 masalah utama pelanggan [Masalah 1, Masalah 2, Masalah 3] dan menghasilkan 1 solusi/fitur inovatif untuk setiap masalah.", returnFormat: "Tabel 3 kolom: Masalah Pelanggan, Ide Solusi/Fitur Baru, dan Nilai Jual Unik (UVP) dari solusi tersebut.", warning: "Membuat solusi yang terlalu rumit atau membutuhkan waktu pengembangan >1 tahun.", context: "Saya mencari ide fitur berikutnya yang benar-benar memecahkan masalah inti." },
+            { number: 93, category: "Inovasi & Riset Produk", title: "Evaluasi Kelayakan Inovasi", role: "Analis Inovasi", goal: "Menyusun kerangka 4 kriteria (Teknis, Pasar, Finansial, Strategis) untuk mengevaluasi kelayakan ide inovasi produk baru [Nama Ide Produk].", returnFormat: "Tabel 4 baris dengan kolom: Kriteria, Definisi, dan 2 Pertanyaan Kunci Evaluasi.", warning: "Mengabaikan kriteria keselarasan ide dengan visi perusahaan (Strategis).", context: "Saya memiliki beberapa ide, tetapi perlu cara terstruktur untuk memilih yang terbaik." },
+            { number: 94, category: "Inovasi & Riset Produk", title: "Daftar Fitur Inti MVP", role: "Spesialis Produk Minimum", goal: "Menyusun 5 fitur inti (Must-Have) untuk produk MVP (Minimum Viable Product) [Jenis Aplikasi/Produk] yang bertujuan [Tujuan Utama].", returnFormat: "Daftar 5 fitur inti, dengan penjelasannya mengapa fitur itu mutlak harus ada dalam MVP.", warning: "Menambahkan fitur 'Nice-to-Have' yang tidak vital untuk tujuan utama.", context: "Saya harus meluncurkan produk secepat mungkin dengan fungsionalitas paling dasar." },
+            { number: 95, category: "Inovasi & Riset Produk", title: "Teknik Brainstorming 'HMW'", role: "Fasilitator Ideasi", goal: "Mengubah masalah bisnis [Masalah Bisnis] menjadi 10 pertanyaan 'Bagaimana Kita Bisa' (How Might We - HMW) untuk sesi brainstorming.", returnFormat: "Daftar 10 pertanyaan HMW yang memicu ide solusi kreatif.", warning: "Membuat pertanyaan yang masih mengandung solusi atau terlalu tertutup.", context: "Sesi brainstorming tim saya sering kali buntu karena pertanyaan yang kurang tepat." },
+            { number: 96, category: "Inovasi & Riset Produk", title: "Kerangka Pengujian Usabilitas", role: "Tester Produk", goal: "Membuat kerangka 3 skenario tugas utama dan 5 pertanyaan tindak lanjut (follow-up) untuk menguji usabilitas prototipe [Nama Prototipe].", returnFormat: "Daftar 3 Skenario Tugas dan Daftar 5 Pertanyaan Pengujian.", warning: "Membuat skenario yang tidak realistis dengan penggunaan produk sebenarnya.", context: "Saya perlu menguji apakah pengguna dapat menyelesaikan tugas inti dalam prototipe baru." },
+            { number: 97, category: "Inovasi & Riset Produk", title: "Peta Jalan Produk 6 Bulan", role: "Product Manager", goal: "Membuat kerangka Peta Jalan Produk (Roadmap) 6 bulan untuk [Nama Produk] dengan membagi fokus menjadi 3 kuartal (Q1, Q2) dan 3 pilar: Retensi, Akuisisi, dan Inovasi.", returnFormat: "Tabel dengan kolom: Kuartal, Fokus Utama, dan 3 Inisiatif/Tujuan Kunci.", warning: "Menetapkan tujuan yang terlalu agresif untuk timeline 6 bulan.", context: "Saya harus mempresentasikan rencana pengembangan produk kepada tim eksekutif." },
+            { number: 98, category: "Inovasi & Riset Produk", title: "Draf Email Permintaan Umpan Balik", role: "Spesialis Komunikasi Produk", goal: "Menyusun draf email yang sopan dan mendorong bagi beta tester untuk memberikan umpan balik tentang [Fitur Beta].", returnFormat: "Email singkat dan persuasif dengan Subjek, Sapaan, Mengapa Feedback Penting, dan Link CTA ke formulir.", warning: "Membuat email yang terlalu panjang atau bersifat menuntut.", context: "Saya butuh respons cepat dan jujur dari kelompok beta tester saya." },
+            { number: 99, category: "Inovasi & Riset Produk", title: "Analisis Model Bisnis Pesaing", role: "Analis Strategi Bisnis", goal: "Membuat kerangka Business Model Canvas (BMC) untuk menganalisis pesaing [Nama Pesaing] dengan mengisi 5 blok kunci: Customer Segment, Value Proposition, Revenue Stream, Key Activities, dan Key Resources.", returnFormat: "Daftar 5 blok BMC dan isian singkat untuk setiap blok berdasarkan asumsi pesaing.", warning: "Membuat asumsi yang tidak logis tentang struktur biaya pesaing.", context: "Saya ingin memetakan kekuatan dan kelemahan model bisnis pesaing." },
+            { number: 100, category: "Inovasi & Riset Produk", title: "Merancang Eksperimen Terkecil", role: "Product Scientist", goal: "Membuat kerangka eksperimen 'termurah dan tercepat' untuk memvalidasi hipotesis [Hipotesis Produk] sebelum membangun fitur tersebut.", returnFormat: "Daftar 4 tahap: Hipotesis, Metrik Kemenangan, Metode (misal: Iklan Dummy, Survei), dan Durasi Eksperimen.", warning: "Merekomendasikan eksperimen yang memerlukan alokasi tim engineering penuh.", context: "Saya ingin memvalidasi ide baru dengan risiko finansial paling kecil." },
+
+            // Logistik & Rantai Pasok (101-105) - Dinomori ulang (96-100 -> 101-105)
+            { number: 101, category: "Logistik & Rantai Pasok", title: "Checklist Kemitraan Jasa Kurir", role: "Manajer Pengiriman", goal: "Membuat daftar 5 kriteria penting yang harus dipertimbangkan saat memilih dan bermitra dengan jasa kurir lokal untuk pengiriman [Jenis Produk].", returnFormat: "Daftar 5 kriteria: Keandalan Waktu Pengiriman (SLA), Biaya, Jangkauan Wilayah, Kemudahan Integrasi API, dan Asuransi/Ganti Rugi.", warning: "Hanya fokus pada biaya termurah, mengabaikan kualitas layanan.", context: "Saya ingin mengamankan mitra pengiriman yang andal dan profesional." },
+            { number: 102, category: "Logistik & Rantai Pasok", title: "Strategi Meminimalkan Biaya Kirim", role: "Konsultan Efisiensi Rantai Pasok", goal: "Menyediakan 4 strategi praktis untuk meminimalkan biaya pengiriman (shipping cost) tanpa mengorbankan kecepatan atau keamanan barang [Jenis Produk].", returnFormat: "Daftar 4 strategi (misal: Negosiasi Tarif Volume, Optimasi Kemasan, Konsolidasi Pengiriman, Zona Tarif).", warning: "Memberi saran yang melanggar ketentuan berat/dimensi dari jasa kurir.", context: "Biaya pengiriman saya terlalu tinggi dan memakan margin keuntungan." },
+            { number: 103, category: "Logistik & Rantai Pasok", title: "Prosedur Penanganan Kerusakan", role: "Spesialis Klaim & Asuransi", goal: "Membuat prosedur 4 langkah untuk menangani klaim pelanggan akibat kerusakan/kehilangan barang selama pengiriman [Jenis Produk].", returnFormat: "Daftar 4 langkah: Verifikasi Bukti, Pengajuan Klaim ke Kurir, Komunikasi Pelanggan, dan Penyelesaian (Refund/Kirim Ulang).", warning: "Membuat pelanggan menunggu terlalu lama untuk hasil klaim.", context: "Saya perlu prosedur yang jelas untuk klaim kerusakan agar pelanggan tidak kecewa." },
+            { number: 104, category: "Logistik & Rantai Pasok", title: "Optimasi Tata Letak Gudang Kecil", role: "Perancang Layout Pergudangan", goal: "Menyediakan 5 prinsip dasar untuk mengoptimalkan tata letak gudang kecil [Ukuran Gudang] agar proses 'Picking' dan 'Packing' lebih cepat.", returnFormat: "Daftar 5 prinsip (misal: Zonasi Produk Cepat Laku, Tata Letak Aliran Linear, Vertikal Space, dll.).", warning: "Merekomendasikan sistem otomatisasi yang mahal dan tidak relevan untuk gudang kecil.", context: "Gudang saya berantakan, dan karyawan menghabiskan terlalu banyak waktu untuk mencari barang." },
+            { number: 105, category: "Logistik & Rantai Pasok", title: "Kerangka Prediksi Kebutuhan Stok", role: "Analis Permintaan (Demand Analyst)", goal: "Membuat kerangka 3 langkah sederhana untuk memprediksi kebutuhan stok [Nama Produk] di bulan mendatang, mempertimbangkan Musiman dan Lead Time.", returnFormat: "Daftar 3 langkah: Analisis Historis, Penyesuaian Faktor Eksternal (Musiman/Promosi), dan Perhitungan Safety Stock.", warning: "Hanya bergantung pada perkiraan intuitif tanpa data historis.", context: "Saya sering kehabisan stok atau memiliki stok berlebih pada waktu yang salah." },
+
+            // Analisis Data & AI (106-115) - Kategori Baru
+            { number: 106, category: "Analisis Data & AI", title: "Identifikasi Pola Data Pelanggan", role: "Data Scientist", goal: "Menganalisis data transaksi pelanggan [Jenis Data] dan mengidentifikasi 3 pola pembelian yang tidak terduga atau tren musiman tersembunyi.", returnFormat: "Daftar 3 Pola yang Ditemukan, disertai 1 implikasi pemasaran untuk setiap pola.", warning: "Menggunakan asumsi korelasi sebagai kausalitas.", context: "Saya ingin menemukan wawasan baru untuk kampanye pemasaran berikutnya." },
+            { number: 107, category: "Analisis Data & AI", title: "Kerangka Uji Signifikansi Statistik", role: "Statistikawan Bisnis", goal: "Membuat kerangka 4 langkah untuk menguji signifikansi hasil pengujian A/B [Variabel yang Diuji] secara statistik.", returnFormat: "Daftar 4 langkah: Tentukan Hipotesis Nol/Alternatif, Pilih Metrik, Hitung P-Value/Interval Kepercayaan, dan Interpretasi Hasil.", warning: "Merekomendasikan pengujian yang terlalu singkat atau sampel yang terlalu kecil.", context: "Saya perlu memastikan hasil pengujian A/B saya dapat diandalkan dan bukan hanya kebetulan." },
+            { number: 108, category: "Analisis Data & AI", title: "Metrik Kualitas Data", role: "Analis Kualitas Data", goal: "Menyediakan 5 metrik utama untuk mengukur kualitas data pelanggan di basis data [Nama Basis Data] dan skor yang dianggap 'baik'.", returnFormat: "Tabel 5 baris dengan kolom: Metrik Kualitas (misal: Kelengkapan, Akurasi), Definisi, dan Standar Skor 'Baik'.", warning: "Mengabaikan pentingnya konsistensi format data.", context: "Basis data pelanggan saya terasa kotor dan tidak terawat." },
+            { number: 109, category: "Analisis Data & AI", title: "Ide Otomasi Proses Bisnis", role: "Konsultan Otomasi AI", goal: "Mengidentifikasi 3 proses bisnis repetitif di departemen [Nama Departemen] yang dapat diotomatisasi menggunakan teknologi AI/RPA (Robotic Process Automation).", returnFormat: "Tabel 3 kolom: Proses Saat Ini, Saran Otomasi AI/RPA, dan Estimasi Penghematan Waktu (per minggu).", warning: "Menyarankan otomatisasi untuk proses yang membutuhkan pengambilan keputusan manusia yang kompleks.", context: "Tim saya menghabiskan terlalu banyak waktu untuk tugas-tugas administratif yang membosankan." },
+            { number: 110, category: "Analisis Data & AI", title: "Etika Penggunaan AI Generatif", role: "Penasihat Etika Bisnis", goal: "Menyusun 5 prinsip panduan etika dasar untuk penggunaan AI Generatif (misal: ChatGPT) dalam pembuatan konten pemasaran internal [Jenis Konten].", returnFormat: "Daftar 5 prinsip (misal: Transparansi, Verifikasi Fakta, Anti-Bias, Kepemilikan IP).", warning: "Membuat prinsip yang terlalu ketat sehingga menghambat kreativitas.", context: "Kami baru mulai menggunakan AI untuk membuat draf konten dan perlu batasan etika." },
+            { number: 111, category: "Analisis Data & AI", title: "Visualisasi Data Kinerja", role: "Desainer Dashboard", goal: "Memberi 3 saran tentang jenis grafik (chart) terbaik untuk memvisualisasikan data [Jenis Data, misal: Pertumbuhan Bulanan, Distribusi Demografi, Perbandingan Kinerja].", returnFormat: "Daftar 3 Jenis Grafik (misal: Line Chart, Pie Chart, Heatmap), Kapan Digunakan, dan Kelebihan.", warning: "Merekomendasikan grafik yang kompleks dan sulit dibaca (misal: 3D charts).", context: "Laporan kinerja bulanan saya sulit dibaca dan dipahami oleh tim eksekutif." },
+            { number: 112, category: "Analisis Data & AI", title: "Kebutuhan Data Produk Baru", role: "Product Data Analyst", goal: "Mengidentifikasi 5 titik data (data point) paling penting yang harus dilacak dari peluncuran produk baru [Nama Produk] untuk mengukur adopsi pengguna.", returnFormat: "Daftar 5 metrik data dan 1 contoh cara mengukurnya (misal: Jumlah pengguna aktif harian, Tingkat penyelesaian onboarding).", warning: "Hanya fokus pada metrik pendapatan (fokus pada perilaku pengguna).", context: "Saya perlu mengukur keberhasilan fitur baru dari hari pertama diluncurkan." },
+            { number: 113, category: "Analisis Data & AI", title: "Strategi Personalisasi Berbasis Data", role: "Pakar Personalisasi", goal: "Menyediakan 3 strategi personalisasi yang didorong oleh data pelanggan (misal: Histori Pembelian, Perilaku Browsing) untuk platform [Platform Komunikasi, misal: Email, Website].", returnFormat: "Daftar 3 strategi, Data Input yang Diperlukan, dan Dampak yang Diharapkan.", warning: "Menyarankan personalisasi yang terlalu invasif terhadap privasi pelanggan.", context: "Saya ingin meningkatkan konversi email dengan membuat pesan yang sangat relevan." },
+            { number: 114, category: "Analisis Data & AI", title: "Panduan Data Storytelling", role: "Pencerita Data", goal: "Menyusun kerangka 3 tahap (Kontekstualisasi, Visualisasi, Narasi) untuk mengubah laporan data bulanan [Nama Laporan] menjadi cerita yang persuasif.", returnFormat: "Daftar 3 tahap dan 3 tips praktis untuk setiap tahap.", warning: "Mengabaikan pentingnya audiens (siapa yang mendengarkan cerita).", context: "Laporan saya penuh angka, tetapi gagal memotivasi tim untuk bertindak." },
+            { number: 115, category: "Analisis Data & AI", title: "Pemilihan Alat Data (BI)", role: "Konsultan Business Intelligence (BI)", goal: "Membandingkan 3 alat Business Intelligence (misal: Tableau, Power BI, Google Data Studio) berdasarkan kemudahan penggunaan dan kemampuan integrasi untuk bisnis [Ukuran Bisnis].", returnFormat: "Tabel perbandingan 3 kolom: Alat BI, Kemudahan Penggunaan (Skor 1-10), dan Kemampuan Integrasi Data.", warning: "Memberi saran alat yang terlalu mahal atau membutuhkan tim IT besar.", context: "Saya perlu alat BI yang mudah digunakan oleh tim non-teknis saya." },
+
+            // Keamanan Siber & TI (116-120) - Kategori Baru
+            { number: 116, category: "Keamanan Siber & TI", title: "Checklist Keamanan Dasar Website", role: "Spesialis Keamanan Siber", goal: "Membuat daftar 5 langkah keamanan siber dasar yang harus diterapkan pada website e-commerce [Nama Website] untuk melindungi data pelanggan.", returnFormat: "Daftar 5 langkah: Sertifikat SSL/HTTPS, Otentikasi Multi-Faktor (MFA), Pembaruan Perangkat Lunak, Backup Terjadwal, dan Firewall Aplikasi Web (WAF).", warning: "Menyarankan tindakan yang ilegal atau melanggar regulasi privasi.", context: "Saya khawatir tentang celah keamanan di website baru saya." },
+            { number: 117, "Keamanan Siber & TI", title: "Panduan Kata Sandi Kuat", role: "Pakar Keamanan Informasi", goal: "Menyusun 5 panduan terbaik untuk membuat dan mengelola kata sandi yang kuat di seluruh organisasi untuk karyawan.", returnFormat: "Daftar 5 panduan: Panjang Minimum, Penggunaan Karakter, Tidak Berulang, Penggunaan Pengelola Kata Sandi, dan MFA.", warning: "Memberi saran yang merepotkan sehingga karyawan akan mencari jalan pintas.", context: "Karyawan saya menggunakan kata sandi yang terlalu mudah ditebak." },
+            { number: 118, category: "Keamanan Siber & TI", title: "Prosedur Respon Insiden Phishing", role: "Manajer Respons Insiden", goal: "Membuat prosedur 4 langkah cepat yang harus diikuti karyawan saat mereka mencurigai atau menerima email phishing.", returnFormat: "Daftar 4 langkah: Jangan Klik, Laporkan, Isolasi Perangkat, dan Reset Kata Sandi.", warning: "Menyarankan karyawan untuk merespons email phishing tersebut.", context: "Kami baru saja mengalami upaya serangan phishing yang gagal, dan butuh panduan." },
+            { number: 119, category: "Keamanan Siber & TI", title: "Evaluasi Kebutuhan Cloud", role: "Arsitek Cloud", goal: "Membandingkan pro dan kontra 3 penyedia layanan Cloud (AWS, Azure, Google Cloud) berdasarkan biaya dan skalabilitas untuk aplikasi [Jenis Aplikasi].", returnFormat: "Tabel perbandingan 3 kolom: Penyedia Cloud, Kelebihan (Fokus Biaya), dan Kekurangan (Fokus Skalabilitas).", warning: "Memberikan rekomendasi tunggal tanpa mempertimbangkan kebutuhan spesifik klien.", context: "Saya perlu memigrasikan aplikasi saya ke layanan cloud yang paling efisien." },
+            { number: 120, category: "Keamanan Siber & TI", title: "Strategi Manajemen Data Backup", role: "Spesialis Pemulihan Bencana", goal: "Menyediakan 3 strategi efektif untuk manajemen data backup dan pemulihan bencana (Disaster Recovery) untuk data penting bisnis.", returnFormat: "Daftar 3 Strategi: Backup 3-2-1, Pengujian Pemulihan Terjadwal, dan Penyimpanan Off-Site.", warning: "Mengabaikan pentingnya menguji proses pemulihan (bukan hanya backup).", context: "Saya ingin memastikan data bisnis saya aman dari kegagalan sistem atau bencana alam." },
+
+            // Kemitraan & Aliansi Strategis (121-125) - Kategori Baru
+            { number: 121, category: "Kemitraan & Aliansi Strategis", title: "Identifikasi Mitra Co-Marketing", role: "Manajer Kemitraan Strategis", goal: "Mengidentifikasi 3 jenis calon mitra yang ideal untuk kampanye co-marketing dengan produk [Nama Produk/Layanan] saya, dengan audiens [Audiens Target].", returnFormat: "Daftar 3 Jenis Mitra (misal: Merek Pelengkap, Pesaing Non-Langsung, Influencer), dan Alasan Kemitraan.", warning: "Merekomendasikan merek yang jelas-jelas bersaing langsung (direct competitor).", context: "Saya ingin menjangkau audiens baru melalui kemitraan yang saling menguntungkan." },
+            { number: 122, category: "Kemitraan & Aliansi Strategis", title: "Kerangka Proposal Kemitraan", role: "Penulis Proposal Bisnis", goal: "Membuat kerangka 5 bagian untuk proposal kemitraan strategis kepada [Nama Calon Mitra] yang menyoroti Value Proposition bersama.", returnFormat: "Daftar 5 bagian: Ringkasan Eksekutif, Masalah yang Dipecahkan Bersama, Nilai yang Ditawarkan (Timbal Balik), Metrik Keberhasilan, dan Rencana Tindak Lanjut.", warning: "Hanya fokus pada apa yang didapat dari pihak saya, bukan mitra.", context: "Saya ingin membuat proposal kemitraan yang sulit ditolak oleh calon mitra besar." },
+            { number: 123, category: "Kemitraan & Aliansi Strategis", title: "Pertanyaan Kunci Evaluasi Mitra", role: "Auditor Aliansi", goal: "Menyusun 5 pertanyaan kunci untuk mengevaluasi potensi mitra bisnis [Jenis Kemitraan] dari segi nilai, risiko, dan keselarasan strategis.", returnFormat: "Daftar 5 pertanyaan (misal: Apakah visi mereka selaras?, Apa yang mereka harapkan?, Apa Risiko Reputasinya?).", warning: "Mengajukan pertanyaan yang tidak relevan dengan jangka panjang.", context: "Saya harus berhati-hati dalam memilih mitra yang akan memengaruhi merek saya." },
+            { number: 124, category: "Kemitraan & Aliansi Strategis", title: "Draf Email Pendekatan Kemitraan", role: "Spesialis Outreach", goal: "Menyusun draf email singkat, profesional, dan personal (maks 5 kalimat) untuk mendekati [Jabatan Target] di [Nama Perusahaan Target] untuk inisiasi kemitraan.", returnFormat: "Subjek Email yang menarik, dan Body Email 5 kalimat (Pembuka, Poin Nilai, CTA Sederhana).", warning: "Menggunakan bahasa yang tidak spesifik atau copy-paste massal.", context: "Saya ingin meningkatkan rasio respons dari email pendekatan kemitraan saya." },
+            { number: 125, category: "Kemitraan & Aliansi Strategis", title: "Kerangka Pengukuran Keberhasilan Aliansi", role: "Analis Kinerja Kemitraan", goal: "Menyediakan 3 KPI kunci (Key Performance Indicator) untuk mengukur keberhasilan aliansi strategis antara [Nama Bisnis Anda] dan [Nama Mitra] yang berfokus pada [Tujuan Kemitraan].", returnFormat: "Daftar 3 KPI yang terukur, Formula Perhitungan, dan Target Waktu (Timeframe).", warning: "Menggunakan metrik yang hanya menguntungkan satu pihak.", context: "Saya perlu memastikan kemitraan ini memiliki metrik keberhasilan yang jelas dan disepakati bersama." },
+        ];
+
+        // --- Logika Aplikasi ---
+
+        const promptList = document.getElementById('prompt-list');
+        const categoryFilter = document.getElementById('category-filter');
+        const searchInput = document.getElementById('search-input');
+        const noResults = document.getElementById('no-results');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const notification = document.getElementById('notification');
+
+        const promptModal = document.getElementById('prompt-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalPromptTextarea = document.getElementById('modal-prompt-text');
+        const modalCopyBtn = document.getElementById('modal-copy-btn');
+
+        // Fungsi untuk menggenerasi Prompt Akhir (Final Prompt) yang siap disalin
+        function generateFinalPrompt(prompt) {
+            // Menggunakan kata "Saya" agar terasa seperti dialog manusia
+            const finalPrompt = `
+Saya ingin kamu berperan sebagai ${prompt.role}, dan membantu saya untuk ${prompt.goal}.
+Hasilkan dalam format: ${prompt.returnFormat}.
+Jangan: ${prompt.warning}.
+Konteksnya: ${prompt.context}.
+            `.trim();
+            return finalPrompt;
+        }
+
+        // Fungsi untuk membuka modal pratinjau
+        function openModal(prompt) {
+            const finalPromptText = generateFinalPrompt(prompt);
+            modalTitle.textContent = `#${prompt.number} Pratinjau: ${prompt.title}`;
+            modalPromptTextarea.value = finalPromptText;
+            
+            // Atur event listener salin di modal
+            // Pastikan listener lama dihapus
+            modalCopyBtn.onclick = () => {
+                copyToClipboard(modalPromptTextarea.value);
+                closeModal();
+            };
+
+            // Tampilkan Modal dengan Animasi
+            promptModal.classList.remove('hidden');
+            promptModal.classList.add('flex');
+            // Menunggu sedikit agar animasi CSS berjalan
+            setTimeout(() => {
+                promptModal.querySelector('.modal-content').classList.remove('scale-95', 'opacity-0');
+                promptModal.querySelector('.modal-content').classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        // Fungsi untuk menutup modal pratinjau
+        function closeModal() {
+            promptModal.querySelector('.modal-content').classList.remove('scale-100', 'opacity-100');
+            promptModal.querySelector('.modal-content').classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                promptModal.classList.remove('flex');
+                promptModal.classList.add('hidden');
+            }, 300); // Sesuai dengan durasi transisi
+        }
+
+        // Tutup modal saat mengklik area luar modal (overlay)
+        promptModal.addEventListener('click', (e) => {
+            if (e.target === promptModal) {
+                closeModal();
+            }
+        });
+
+        // Fungsi untuk membuat elemen Card Prompt
+        function createPromptCard(prompt) {
+            const card = document.createElement('div');
+            card.className = 'bg-card p-6 rounded-xl shadow-md hover:shadow-lg transition duration-300 flex flex-col border border-gray-100';
+
+            card.innerHTML = `
+                <!-- Nomor dan Kategori Label -->
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-sm font-extrabold text-white bg-primary px-3 py-1 rounded-full shadow-md">#${prompt.number}</span>
+                    <span class="text-xs font-semibold tracking-wider uppercase text-category-text bg-category-bg px-3 py-1 rounded-full">${prompt.category}</span>
+                </div>
+
+                <!-- Judul -->
+                <h2 class="text-xl font-bold text-gray-900 mb-3">${prompt.title}</h2>
+
+                <!-- Peran Singkat -->
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-600 mb-1">Peran:</p>
+                    <p class="font-semibold text-sm text-gray-800">${prompt.role}</p>
+                </div>
+
+                <!-- Deskripsi Tugas -->
+                <div class="mb-6 flex-grow">
+                    <p class="text-sm font-medium text-gray-600 mb-1">Tujuan/Tugas:</p>
+                    <p class="text-gray-700 text-base leading-relaxed">${prompt.goal}</p>
+                </div>
+
+                <!-- Tombol Lihat & Salin (Pemicu Modal) -->
+                <button class="preview-btn mt-auto w-full bg-primary text-white py-2 rounded-lg font-semibold hover:bg-primary-dark transition duration-150 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    Lihat & Salin Prompt
+                </button>
+            `;
+
+            // Tambahkan listener untuk membuka modal
+            card.querySelector('.preview-btn').addEventListener('click', () => {
+                openModal(prompt);
+            });
+
+            return card;
+        }
+
+        // Fungsi untuk mengisi kategori ke dropdown filter
+        function populateCategories() {
+            const categories = [...new Set(masterPrompts.map(p => p.category))].sort();
+            // Hapus kategori lama jika ada
+            while (categoryFilter.options.length > 1) {
+                categoryFilter.remove(1);
+            }
+            categories.forEach(category => {
+                const count = masterPrompts.filter(p => p.category === category).length;
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = `${category} (${count} Prompts)`;
+                categoryFilter.appendChild(option);
+            });
+        }
+
+        // Fungsi untuk menyaring dan menampilkan prompt
+        function filterPrompts() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const selectedCategory = categoryFilter.value;
+
+            // Saring data berdasarkan input
+            const filteredPrompts = masterPrompts.filter(prompt => {
+                const matchesCategory = !selectedCategory || prompt.category === selectedCategory;
+                const searchFields = [
+                    prompt.title.toLowerCase(),
+                    prompt.role.toLowerCase(),
+                    prompt.goal.toLowerCase(),
+                    prompt.category.toLowerCase(),
+                    String(prompt.number)
+                ].join(' '); 
+
+                const matchesSearch = searchFields.includes(searchTerm);
+
+                return matchesCategory && matchesSearch;
+            });
+
+            // Kosongkan dan isi ulang daftar
+            promptList.innerHTML = '';
+            loadingIndicator.classList.add('hidden'); 
+
+            if (filteredPrompts.length === 0) {
+                noResults.classList.remove('hidden');
+                promptList.innerHTML = '<div class="col-span-full"></div>';
+            } else {
+                noResults.classList.add('hidden');
+                filteredPrompts.forEach(prompt => {
+                    promptList.appendChild(createPromptCard(prompt));
+                });
+            }
+        }
+
+        // Fungsi untuk menyalin teks ke clipboard
+        function copyToClipboard(text) {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            
+            try {
+                // Menggunakan document.execCommand('copy') untuk kompatibilitas iframe
+                document.execCommand('copy');
+                showNotification();
+            } catch (err) {
+                console.error('Gagal menyalin:', err);
+                // Fallback untuk perangkat non-desktop jika diperlukan, meskipun execCommand harus bekerja di sini
+            }
+            document.body.removeChild(tempInput);
+        }
+
+        // Fungsi untuk menampilkan notifikasi salin
+        function showNotification() {
+            notification.classList.remove('translate-x-full', 'opacity-0');
+            notification.classList.add('translate-x-0', 'opacity-100');
+            setTimeout(() => {
+                notification.classList.remove('translate-x-0', 'opacity-100');
+                notification.classList.add('translate-x-full', 'opacity-0');
+            }, 3000); 
+        }
+
+        // Inisialisasi Aplikasi
+        window.onload = function() {
+            populateCategories();
+            filterPrompts(); // Tampilkan semua 125 prompt saat pertama kali dimuat
+        };
+
+    </script>
+
+</body>
+</html>
+

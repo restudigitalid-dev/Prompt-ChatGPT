@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100 Master Prompt Bisnis</title>
+    <style>
+        /* --- CSS RESET & VARIABLES --- */
+        :root {
+            --primary: #6366f1; /* Indigo */
+            --primary-hover: #4f46e5;
+            --bg-body: #f8f9fa;
+            --bg-card: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-bottom: 50px;
+        }
+
+        /* --- LAYOUT --- */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 0 20px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* --- CONTROLS (SEARCH & FILTER) --- */
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 20px;
+            z-index: 10;
+        }
+
+        .search-box {
+            flex: 2;
+            min-width: 280px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .filter-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-box select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        /* --- GRID SYSTEM --- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        /* --- CARD STYLE --- */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+
+        .card-category {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            background-color: rgba(99, 102, 241, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            width: fit-content;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .card-preview {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 20px;
+            flex-grow: 1; /* Push button to bottom */
+        }
+
+        .card-btn {
+            margin-top: auto;
+            text-align: center;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .card:hover .card-btn {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            border-radius: var(--radius);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 25px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+
+        .modal-title h2 {
+            font-size: 1.5rem;
+            color: var(--text-main);
+            margin-bottom: 5px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            line-height: 1;
+            padding: 0 10px;
+        }
+
+        .modal-close:hover {
+            color: #ef4444;
+        }
+
+        .modal-body {
+            padding: 25px;
+            overflow-y: auto;
+            background-color: #f9fafb;
+        }
+
+        .prompt-text-area {
+            white-space: pre-wrap; /* Preserves line breaks */
+            font-family: inherit;
+            font-size: 1.05rem;
+            color: #374151;
+            background: white;
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            line-height: 1.7;
+        }
+
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        .btn-secondary:hover { background-color: #d1d5db; }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+
+        /* --- NO RESULTS --- */
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 50px;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media (max-width: 768px) {
+            header h1 { font-size: 2rem; }
+            .controls { flex-direction: column; gap: 10px; }
+            .search-box, .filter-box { width: 100%; }
+            .modal-content { width: 95%; height: 85vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Master Prompt Library</h1>
+            <p>100 Prompt Bisnis Strategis &amp; Profesional</p>
+        </header>
+
+        <!-- CONTROLS -->
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Cari prompt (misal: branding, sales, konten)...">
+            </div>
+            <div class="filter-box">
+                <select id="categoryFilter">
+                    <option value="all">Semua Kategori</option>
+                    <!-- Categories will be injected by JS -->
+                </select>
+            </div>
+        </div>
+
+        <!-- PROMPT GRID -->
+        <div id="promptGrid" class="grid">
+            <!-- Cards will be injected by JS -->
+        </div>
+    </div>
+
+    <!-- MODAL POPUP -->
+    <div id="promptModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span id="modalCategory" class="card-category">CATEGORY</span>
+                    <h2 id="modalTitle">Judul Prompt</h2>
+                </div>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="modalContent" class="prompt-text-area">
+                    <!-- Content goes here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Tutup</button>
+                <button class="btn btn-primary" id="copyButton" onclick="copyPrompt()">
+                    <span>Copy Prompt</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA SOURCE (100 PROMPTS - DO NOT EDIT) ---
+        const promptsData = [
+            // Branding & Positioning
+            { id: "BP_01", category: "Branding & Positioning", title: "Perancangan Identitas Brand Premium", content: "Saya sedang membangun sebuah brand di industri [Industri/Niche] yang menawarkan [Produk/Layanan]. Pasar ini sangat ramai, dan saya tidak ingin terjebak dalam perang harga. Saya ingin kamu bertindak sebagai konsultan brand luxury yang ahli dalam psikologi konsumen. Bantu saya merancang identitas brand yang memancarkan aura premium dan eksklusivitas. Tolong definisikan 'Brand Voice', 'Core Values', dan 'Brand Story' yang bisa membuat audiens [Target Audiens Spesifik] merasa bahwa membeli dari saya adalah sebuah peningkatan status sosial, bukan sekadar transaksi. Berikan contoh penerapan bahasanya dalam tagline dan bio media sosial." },
+            { id: "BP_02", category: "Branding & Positioning", title: "Analisis Diferensiasi Radikal (USP)", content: "Saat ini saya merasa brand saya, [Nama Brand], terlalu mirip dengan kompetitor seperti [Sebutkan 1-2 Kompetitor/Tipe Kompetitor]. Saya menjual [Produk Utama], tapi sulit bagi pelanggan untuk melihat bedanya. Mari kita bedah Unique Selling Proposition (USP) saya. Saya ingin kamu menganalisis situasi ini dan memberikan 3 opsi 'Angle Positioning' yang belum banyak terpikirkan di pasar Indonesia. Fokuslah pada elemen emosional atau pengalaman pelanggan, bukan hanya fitur produk. Untuk setiap opsi, jelaskan mengapa sudut pandang tersebut akan menarik bagi [Target Pasar] dan bagaimana cara mengkomunikasikannya dalam satu kalimat yang menohok." },
+            { id: "BP_03", category: "Branding & Positioning", title: "Membangun Personal Branding Founder", content: "Sebagai pendiri bisnis di bidang [Bidang Bisnis], saya ingin membangun personal branding yang kuat di [Platform: LinkedIn/Instagram/TikTok] untuk mendukung kredibilitas bisnis saya. Namun, saya tidak ingin terlihat seperti 'motivator' klise atau terlalu jualan. Saya ingin dikenal sebagai [Desired Persona: misal, Pemikir Strategis / Praktisi Lapangan]. Tolong buatkan cetak biru strategi personal branding untuk 3 bulan ke depan. Sertakan pilar topik utama yang harus saya bahas, nada bicara (tone of voice) yang elegan namun membumi, dan bagaimana cara menyisipkan cerita kegagalan atau tantangan bisnis agar audiens merasa relevan dan percaya pada otoritas saya." },
+            { id: "BP_04", category: "Branding & Positioning", title: "Strategi Rebranding & Transisi", content: "Bisnis saya, [Nama Bisnis], berencana melakukan rebranding total. Dulu kami dikenal sebagai [Posisi Lama: misal, pilihan murah/merakyat], tapi sekarang kami ingin beralih menyasar segmen [Posisi Baru: misal, profesional/high-end]. Ini adalah transisi yang berisiko. Bertindaklah sebagai ahli strategi manajemen krisis dan branding. Susunlah rencana komunikasi bertahap untuk mengumumkan perubahan ini tanpa mengasingkan pelanggan setia yang lama, namun efektif menarik pelanggan baru yang lebih 'berduit'. Berikan draft email atau caption pengumuman yang menyentuh hati dan menjelaskan alasan evolusi ini dengan logis dan inspiratif." },
+            { id: "BP_05", category: "Branding & Positioning", title: "Arsitektur Brand Storytelling", content: "Orang tidak membeli barang, mereka membeli cerita. Saya memiliki produk [Nama Produk] yang sebenarnya punya latar belakang pembuatan yang unik karena [Sebutkan Fakta Unik/Sejarah]. Tolong ubah fakta mentah ini menjadi sebuah narasi 'Brand Story' yang memikat. Gunakan struktur 'Hero's Journey' di mana pelanggan adalah pahlawannya dan produk saya adalah senjata atau pemandunya. Saya ingin cerita ini bisa dipakai di halaman 'About Us' website dan skrip video brand profile. Pastikan bahasanya emosional, menggugah, dan tidak terdengar seperti brosur korporat yang kaku." },
+            { id: "BP_06", category: "Branding & Positioning", title: "Audit Persepsi Visual & Estetika", content: "Saya merasa visual brand saya saat ini tidak selaras dengan harga yang saya tawarkan. Produk saya harganya [Harga Produk] (tergolong tinggi), tapi desain feed dan kemasan saya terlihat seperti produk [Harga Murah]. Tanpa perlu mendesain gambar, berikan saya arahan kreatif (creative direction) yang lengkap. Jelaskan palet warna, jenis tipografi, dan gaya fotografi (moodboard verbal) yang harus saya minta ke desainer grafis agar brand [Nama Brand] memancarkan kesan [Kesan yang diinginkan: misal, Minimalis Elegan / Bold & Disruptive]. Berikan alasan psikologis di balik setiap pilihan elemen visual tersebut." },
+            { id: "BP_07", category: "Branding & Positioning", title: "Menentukan Brand Archetype", content: "Saya bingung menentukan kepribadian brand saya di media sosial. Kadang saya lucu, kadang terlalu serius. Bantu saya menetapkan satu 'Brand Archetype' yang konsisten berdasarkan teori Carl Jung, tapi disesuaikan dengan konteks pasar Indonesia. Bisnis saya bergerak di [Industri] dengan target [Target Market]. Apakah saya lebih cocok menjadi 'The Ruler', 'The Magician', atau 'The Everyman'? Pilihkan satu yang paling potensial untuk memenangkan hati pasar ini, jelaskan alasannya, dan berikan contoh 5 kata sifat serta 3 contoh kalimat sapaan khas yang harus selalu digunakan admin media sosial saya." },
+            { id: "BP_08", category: "Branding & Positioning", title: "Positioning Anti-Mainstream", content: "Semua orang di industri [Industri] mengatakan hal yang sama, yaitu [Sebutkan Klaim Umum: misal, Kualitas Terbaik / Harga Termurah]. Saya ingin melawan arus (contrarian positioning). Bantu saya merumuskan strategi positioning yang 'menyerang' status quo atau kebiasaan buruk di industri ini. Saya ingin brand saya menjadi solusi bagi mereka yang sudah muak dengan janji manis kompetitor. Tuliskan manifesto brand (sekitar 200 kata) yang berani, provokatif, tapi tetap etis, yang menyatakan bahwa kami berbeda dan kami di sini untuk mengubah standar permainan." },
+            { id: "BP_09", category: "Branding & Positioning", title: "Strategi Naming & Slogan", content: "Saya sedang mengembangkan lini produk baru berupa [Deskripsi Produk Singkat]. Saya butuh bantuan brainstorming nama dan slogan. Saya ingin nama yang mudah diucapkan oleh lidah orang Indonesia, maksimal 3 suku kata, tapi terdengar modern dan global. Untuk slogan, saya ingin sesuatu yang singkat tapi menempel di kepala (sticky), mirip seperti pendekatan brand-brand startup unicorn. Berikan 10 opsi nama beserta filosofinya, dan 10 opsi slogan yang berfokus pada manfaat akhir (outcome) yang dirasakan konsumen." },
+            { id: "BP_10", category: "Branding & Positioning", title: "Lokalisasi Brand Global ke Lokal", content: "Saya mengadaptasi model bisnis atau konsep produk yang sukses di [Negara Asal Konsep], yaitu [Jelaskan Konsep]. Namun, saya tahu selera pasar Indonesia sangat spesifik dan unik. Bertindaklah sebagai ahli budaya dan perilaku konsumen Indonesia. Berikan saya analisis tentang aspek apa saja dari konsep asli ini yang harus diubah total agar diterima oleh masyarakat lokal (local wisdom). Bagaimana cara saya mempromosikan ini agar tidak dianggap 'asing' atau tidak relevan, melainkan dianggap sebagai solusi yang sangat mengerti kebutuhan orang Indonesia?" },
+            
+            // Content Marketing
+            { id: "CM_01", category: "Content Marketing", title: "Strategi Konten Edukasi Soft-Selling", content: "Saya menjual [Produk/Jasa] yang membutuhkan edukasi pasar karena [Alasan: misal, harganya mahal / teknisnya rumit]. Jika saya langsung jualan (hard selling), orang lari. Tolong rancang strategi konten edukasi untuk [Instagram/TikTok] selama 2 minggu. Fokusnya adalah mengubah audiens dari 'tidak sadar masalah' (unaware) menjadi 'sadar solusi' (solution aware). Buatkan outline konten yang membahas gejala masalah, mitos yang salah, hingga akhirnya memperkenalkan metode saya sebagai solusi logis. Gaya bahasanya harus seperti teman yang memberi saran, bukan guru yang menggurui." },
+            { id: "CM_02", category: "Content Marketing", title: "Pembuatan Kalender Konten Authority", content: "Tujuan saya bulan ini adalah membangun otoritas di LinkedIn/Twitter sebagai ahli di bidang [Keahlian]. Saya ingin orang melihat saya sebagai 'Go-To Person'. Buatkan saya kalender konten untuk 4 minggu (3 posting per minggu). Campurkan tipe konten: 1. Opini kontrarian terhadap tren industri, 2. Studi kasus (breakdown) keberhasilan/kegagalan, 3. Tips taktis yang bisa langsung dipraktekkan. Untuk setiap ide topik, berikan 'Hook' atau kalimat pembuka yang memancing rasa ingin tahu profesional di bidang ini." },
+            { id: "CM_03", category: "Content Marketing", title: "Script Video Pendek Viral (Reels/TikTok)", content: "Saya punya ide untuk video pendek tentang [Topik Spesifik], tapi saya bingung cara menyampaikannya agar tidak di-skip dalam 3 detik pertama. Produk saya adalah [Produk]. Tolong buatkan naskah video durasi 45 detik yang dioptimalkan untuk retensi penonton. Gunakan struktur: Hook Visual/Audio yang mengejutkan -> Masalah yang relate -> Twist atau Solusi Cepat -> Call to Action (CTA) yang santai. Tuliskan secara detail apa yang harus saya ucapkan dan apa visual yang harus tampil di layar (B-Roll atau Teks) detik demi detik." },
+            { id: "CM_04", category: "Content Marketing", title: "Repurposing Konten Efisien", content: "Saya baru saja melakukan webinar/live session selama 1 jam tentang [Topik Webinar]. Isinya sangat 'daging'. Saya tidak punya waktu untuk membuat konten baru dari nol setiap hari. Bertindaklah sebagai ahli strategi konten. Berikan saya rencana detail bagaimana memecah (chop) 1 jam video ini menjadi 10 potong konten berbeda format: Carousel Instagram, Utas (Thread) Twitter, Video Reels pendek, dan Email Newsletter. Tunjukkan bagian mana yang harus diambil untuk masing-masing format agar tetap koheren dan bernilai bagi audiens yang berbeda platform." },
+            { id: "CM_05", category: "Content Marketing", title: "Copywriting Caption Storytelling", content: "Saya ingin memposting foto tentang proses di balik layar (behind the scene) bisnis saya saat [Kegiatan: misal, lembur packing / meeting alot]. Tujuannya bukan jualan langsung, tapi membangun koneksi emosional (trust). Tolong buatkan caption Instagram yang panjang (micro-blog) dengan gaya storytelling yang rentan dan jujur. Ceritakan perjuangan, keraguan, atau dedikasi tim kami, lalu tutup dengan pesan moral yang menginspirasi audiens [Target Audiens]. Jangan gunakan bahasa marketing, gunakan bahasa hati ke hati." },
+            { id: "CM_06", category: "Content Marketing", title: "Strategi Email Marketing Nurturing", content: "Saya memiliki list email sebanyak [Jumlah] subscriber yang sudah lama tidak saya sapa (cold list). Saya ingin menghangatkan mereka kembali sebelum meluncurkan produk baru bulan depan. Tolong buatkan urutan (sequence) 3 email 'Soap Opera'. Email 1: Drama/Misteri pembuka yang membuat mereka ingat siapa saya tanpa merasa dijualin. Email 2: Cerita penghubung yang memberikan value atau tips gratis. Email 3: Jembatan menuju penawaran yang akan datang (soft launch). Buatkan subjek email yang mustahil untuk diabaikan." },
+            { id: "CM_07", category: "Content Marketing", title: "Ide Konten Interaktif (Engagement)", content: "Engagement rate akun sosial media brand [Nama Brand] sedang turun. Followers ada, tapi mereka pasif (silent readers). Saya butuh ide konten yang 'memaksa' orang untuk berkomentar, save, atau share, tapi tidak terlihat mengemis like. Berikan 5 konsep konten interaktif yang relevan dengan niche [Niche Bisnis]. Misalnya, tebak-tebakan, debat opini, atau 'This or That', tapi kaitkan dengan masalah sehari-hari audiens saya. Tuliskan juga pertanyaan pancingan (trigger question) untuk setiap konsep tersebut." },
+            { id: "CM_08", category: "Content Marketing", title: "Copywriting Landing Page (Above the Fold)", content: "Saya sedang mendesain ulang landing page untuk [Produk/Layanan]. Saya tahu bagian paling krusial adalah 'Above the Fold' (layar pertama yang dilihat). Tolong buatkan copy untuk bagian ini yang terdiri dari: 1. Headline utama yang menjanjikan manfaat terbesar/impian kustomer. 2. Sub-headline yang menjelaskan 'cara' atau menghilangkan keraguan. 3. Teks tombol CTA yang lebih menarik daripada sekadar 'Beli Sekarang'. Target audiens saya adalah orang yang skeptis dan logis. Fokus pada kejelasan (clarity) di atas kreativitas yang membingungkan." },
+            { id: "CM_09", category: "Content Marketing", title: "Strategi User Generated Content (UGC)", content: "Saya ingin pelanggan saya mempromosikan produk [Produk] secara sukarela di story mereka, karena testimoni mereka lebih powerfull daripada iklan saya. Rancang sebuah kampanye atau 'Challenge' yang menyenangkan yang membuat mereka mau memposting produk saya. Apa insentifnya (selain uang)? Apa hashtag-nya? Dan bagaimana cara saya meminta mereka melakukan itu dalam kartu ucapan terima kasih di dalam paket pengiriman? Buatkan instruksi yang membuat mereka merasa bangga menjadi bagian dari komunitas brand ini, bukan merasa dimanfaatkan." },
+            { id: "CM_10", category: "Content Marketing", title: "Analisis Tren & Newsjacking", content: "Saat ini sedang ramai isu/tren tentang [Sebutkan Tren/Berita Viral Terkini]. Saya ingin menunggangi ombak ini (newsjacking) untuk brand saya [Nama Brand], tapi saya takut terlihat *cringe* atau maksa. Sebagai konsultan media sosial yang cerdas, berikan saya 3 sudut pandang (angle) konten untuk membahas tren ini yang relevan dengan nilai-nilai bisnis saya. Bagaimana saya bisa ikut percakapan ini dengan cara yang berkelas, menambahkan perspektif baru, dan secara halus mengingatkan orang akan pentingnya [Solusi/Produk Saya]?" },
+
+            // Digital Marketing Strategy
+            { id: "DMS_01", category: "Digital Marketing Strategy", title: "Perancangan Full Funnel Strategy", content: "Saya memiliki produk [Produk] dengan harga [Harga]. Saya ingin beralih dari sekadar 'posting jualan' menjadi memiliki sistem funnel yang otomatis. Tolong gambarkan strategi Digital Marketing Funnel lengkap dari Top of Funnel (Awareness) hingga Bottom of Funnel (Conversion) dan Retention. Jelaskan kanal apa yang harus saya pakai di setiap tahap (misal: Ads untuk traffic, Email untuk nurturing, WA untuk closing), jenis kontennya, dan metrik KPI apa yang harus saya pantau di setiap tahap. Pastikan strateginya realistis untuk tim kecil." },
+            { id: "DMS_02", category: "Digital Marketing Strategy", title: "Strategi Iklan Berbayar (Paid Ads)", content: "Saya punya budget [Jumlah Budget] per bulan untuk iklan di [Facebook/Instagram/TikTok Ads]. Target saya adalah mendapatkan leads/penjualan untuk [Produk]. Jangan berikan teknis setting dashboard, tapi berikan saya 'Strategi Kreatif & Targeting'. Siapa saja segmen audiens (Interest/Lookalike) yang harus saya tes? Apa 3 hook visual berbeda yang harus saya buat untuk menghindari ad fatigue (iklan basi)? Dan bagaimana struktur copywriting iklannya agar orang berhenti scrolling? Fokus pada efisiensi budget (ROAS)." },
+            { id: "DMS_03", category: "Digital Marketing Strategy", title: "Audit Customer Journey Map", content: "Banyak orang berkunjung ke website/toko online saya, tapi sedikit yang beli. Sepertinya ada gesekan (friction) dalam perjalanan pelanggan. Mari kita simulasi dan audit Customer Journey untuk [Bisnis Saya]. Coba posisikan dirimu sebagai calon pembeli yang rewel dan sibuk. Identifikasi 5 titik di mana kemungkinan besar mereka drop-off (batal beli) mulai dari melihat iklan hingga proses checkout. Untuk setiap titik kebocoran itu, berikan solusi taktis psikologis atau teknis untuk memuluskan jalan mereka menuju pembayaran." },
+            { id: "DMS_04", category: "Digital Marketing Strategy", title: "Strategi Peluncuran Produk (Launch)", content: "Dua bulan lagi saya akan merilis [Produk Baru]. Saya tidak ingin saat rilis nanti sepi. Saya ingin membuat kehebohan dan antrian virtual. Rancanglah strategi 'Product Launch Sequence' model Jeff Walker tapi versi ringkas. Apa yang harus saya lakukan di H-30 (Pemanasan), H-7 (Hype & Kelangkaan), Saat Hari H (Open Cart), dan H+3 (Closing Cart)? Berikan tema konten dan pemicu psikologis (seperti scarcity/urgency) yang harus ditekankan di setiap fase tersebut." },
+            { id: "DMS_05", category: "Digital Marketing Strategy", title: "Analisis Kompetitor Digital (Spying)", content: "Kompetitor utama saya adalah [Nama Kompetitor/Website]. Mereka terlihat sangat sukses. Tanpa perlu data internal mereka, tolong bantu saya membedah strategi digital mereka berdasarkan apa yang terlihat di publik. Analisis kemungkinan sumber traffic mereka, jenis konten yang paling banyak interaksinya, dan bagaimana cara mereka melakukan closing (apakah via DM, WA, atau Website). Dari analisis itu, berikan saya strategi 'Counter-Attack': apa celah kelemahan mereka yang bisa saya manfaatkan untuk merebut pangsa pasar mereka?" },
+            { id: "DMS_06", category: "Digital Marketing Strategy", title: "Strategi Retargeting Multi-Platform", content: "Saya menyadari bahwa jarang ada orang yang beli pada pertemuan pertama. Saya ingin mengejar mereka yang sudah pernah lihat produk [Produk] tapi belum beli. Rancang strategi Retargeting (Iklan hantu) yang efektif tapi tidak menyebalkan. Konten apa yang harus saya tunjukkan kepada orang yang: 1. Baru view konten video 50%, 2. Sudah klik link tapi tidak add to cart, 3. Sudah add to cart tapi abandon checkout? Berikan naskah iklan retargeting yang sifatnya mengingatkan dengan ramah atau menawarkan insentif terbatas." },
+            { id: "DMS_07", category: "Digital Marketing Strategy", title: "Optimasi Konversi Website (CRO)", content: "Halaman penjualan (Sales Page) saya memiliki konversi rendah. Produk saya bagus, jadi masalahnya pasti di penyampaian. Bertindaklah sebagai ahli CRO (Conversion Rate Optimization). Saya akan berikan elemen-elemen yang ada di halaman saya saat ini: [Sebutkan elemen: misal, Foto produk, deskripsi panjang, tombol beli di bawah]. Kritiklah struktur ini. Apa elemen kepercayaan (trust signals) yang kurang? Apakah penempatan tombolnya salah? Berikan checklist perubahan yang harus saya lakukan hari ini juga untuk meningkatkan potensi konversi instan." },
+            { id: "DMS_08", category: "Digital Marketing Strategy", title: "Strategi Omnichannel untuk Lokal", content: "Saya punya toko fisik di [Lokasi] dan juga jualan online. Saya ingin menghubungkan keduanya (O2O - Online to Offline). Bagaimana strategi digital marketing untuk mendatangkan orang yang lihat Instagram/Google Maps agar mau datang fisik ke toko? Ide promosi apa yang bisa menukar jejak digital dengan kunjungan fisik? Dan sebaliknya, bagaimana cara mengambil data pelanggan yang datang ke toko agar bisa saya target ulang secara digital? Berikan ide kampanye yang praktis dan murah." },
+            { id: "DMS_09", category: "Digital Marketing Strategy", title: "Perencanaan Lead Magnet", content: "Saya butuh database calon pelanggan (Leads) untuk jasa [Jenis Jasa/Produk B2B]. Orang tidak akan memberikan email/nomor WA mereka secara cuma-cuma. Bantu saya memikirkan 3 ide Lead Magnet (Sesuatu yang gratis) yang sangat bernilai tinggi dan 'Irresistible'. Lead magnet ini harus spesifik menyelesaikan satu masalah kecil target pasar saya secara instan. Jangan sarankan ebook umum. Pikirkan tools, template, checklist, atau mini-course. Jelaskan isinya dan judul lead magnet yang bombastis." },
+            { id: "DMS_10", category: "Digital Marketing Strategy", title: "Strategi Influencer Marketing (KOL)", content: "Saya ingin menggunakan Influencer/KOL untuk mendongkrak brand [Nama Brand], tapi budget saya terbatas dan saya takut boncos (ROI minus). Jangan sarankan artis besar. Bantu saya menyusun strategi 'Micro-Influencer Army'. Kriteria influencer seperti apa yang harus saya cari (engagement rate, gaya bahasa, niche)? Bagaimana cara saya mendekati mereka (outreach script) untuk menawarkan sistem barter atau affiliate, sehingga saya tidak perlu bayar rate card mahal di depan? Berikan brief konten apa yang harus saya minta agar mereka tidak sekadar posting foto selfie dengan produk." },
+
+            // Digital Business & Monetization
+            { id: "DBM_01", category: "Digital Business & Monetization", title: "Membangun Value Ladder (Tangga Penawaran)", content: "Saat ini saya hanya mengandalkan satu produk utama seharga [Harga]. Jika pelanggan sudah beli, transaksi selesai. Saya ingin meningkatkan Customer Lifetime Value (CLV). Bantu saya merancang 'Value Ladder' yang lengkap. Apa produk 'Front-End' murah (di bawah Rp 100rb) yang bisa saya jual untuk mengakuisisi pelanggan baru dengan mudah? Lalu, apa produk 'Back-End' atau layanan premium (High Ticket) yang bisa saya tawarkan kepada pelanggan setia? Jelaskan logika kenaikan harga dan nilai yang saya berikan di setiap tangga tersebut." },
+            { id: "DBM_02", category: "Digital Business & Monetization", title: "Model Bisnis Membership/Subscription", content: "Saya lelah harus mencari pelanggan baru setiap bulan. Saya ingin mengubah atau menambah model bisnis [Bisnis Saya] menjadi model berlangganan (Subscription/Membership) agar ada pendapatan berulang (Recurring Income). Apa yang bisa saya tawarkan secara rutin kepada pelanggan sehingga mereka rela dipotong saldonya setiap bulan? Apakah konten eksklusif, pengiriman rutin, komunitas, atau akses software? Rancang paket membership yang 'No-Brainer' beserta harga psikologis yang tepat untuk pasar Indonesia." },
+            { id: "DBM_03", category: "Digital Business & Monetization", title: "Validasi Ide Produk Digital", content: "Saya punya ide untuk membuat produk digital (E-course/E-book) tentang [Topik]. Sebelum saya menghabiskan waktu berbulan-bulan membuatnya, saya ingin memvalidasi apakah ide ini laku dijual. Berikan saya strategi 'Pre-Sell' atau validasi pasar yang bisa saya jalankan dalam 7 hari. Bagaimana cara tes ombak di media sosial? Bagaimana cara meminta orang transfer uang (Pre-order) bahkan sebelum produknya jadi, sebagai bukti komitmen pasar? Tuliskan langkah-langkah taktisnya." },
+            { id: "DBM_04", category: "Digital Business & Monetization", title: "Strategi Penetapan Harga (Pricing Strategy)", content: "Saya bingung menetapkan harga untuk [Produk/Jasa Baru]. Kompetitor jual di harga X, tapi kualitas saya lebih baik. Saya takut kemahalan, tapi takut rugi kalau kemurahan. Bertindaklah sebagai ahli strategi harga. Berikan saya 3 opsi model penetapan harga beserta psikologinya: 1. Penetration Pricing (Masuk pasar), 2. Value-Based Pricing (Berdasarkan hasil), 3. Tiered Pricing (Paket Gold/Silver/Bronze). Jelaskan kelebihan dan risiko masing-masing opsi untuk kondisi pasar saat ini dan mana yang Anda rekomendasikan untuk profitabilitas jangka panjang." },
+            { id: "DBM_05", category: "Digital Business & Monetization", title: "Sistem Afiliasi & Reseller", content: "Saya ingin melipatgandakan penjualan tanpa menambah tim sales internal, yaitu dengan membangun pasukan reseller/afiliasi. Masalahnya, banyak sistem reseller yang mati suri. Tolong rancang sistem reward dan komisi yang menarik yang membuat reseller semangat jualan [Produk Saya]. Selain persentase komisi, apa dukungan marketing kit dan edukasi yang harus saya siapkan untuk mereka? Bagaimana struktur 'Gamification' (misal: bonus target bulanan) yang bisa memicu mereka berkompetisi satu sama lain?" },
+            { id: "DBM_06", category: "Digital Business & Monetization", title: "Diversifikasi Revenue Stream", content: "Bisnis saya [Jenis Bisnis] sangat bergantung pada satu sumber pendapatan. Jika tren ini mati, bisnis saya habis. Analisis model bisnis saya dan sarankan 3 aliran pendapatan tambahan (Revenue Streams) yang masih relevan dengan ekosistem bisnis saya tapi belum saya garap. Bisa berupa monetisasi data, penyewaan aset, white-labeling, atau jasa konsultasi. Jelaskan seberapa sulit eksekusinya dan estimasi potensi keuntungannya." },
+            { id: "DBM_07", category: "Digital Business & Monetization", title: "Transisi dari Jasa (Service) ke Produk", content: "Saya menjalankan bisnis jasa [Jenis Jasa: misal Desain/Konsultan] yang pendapatannya dibatasi oleh waktu saya (Time for Money). Saya ingin scale up dengan mengubah keahlian saya menjadi 'Productized Service' atau Produk Digital. Bagaimana cara membungkus jasa saya menjadi paket standar yang mudah dijual massal tanpa saya harus terlibat intens di setiap proyek? Rancang struktur paketnya, apa yang didapat klien, dan bagaimana sistem delivery-nya agar efisien." },
+            { id: "DBM_08", category: "Digital Business & Monetization", title: "Monetisasi Komunitas", content: "Saya berhasil membangun komunitas gratis di [Telegram/Discord/WA] dengan [Jumlah] anggota yang antusias membahas [Topik]. Saya ingin mulai memonetisasi komunitas ini tanpa membuat mereka merasa saya 'mata duitan'. Strategi apa yang halus tapi efektif? Apakah membuka donasi, konten berbayar, atau jual merchandise? Berikan naskah pengumuman kepada anggota komunitas yang menjelaskan bahwa monetisasi ini diperlukan untuk keberlangsungan komunitas agar mereka mendukung dengan senang hati." },
+            { id: "DBM_09", category: "Digital Business & Monetization", title: "Strategi Upselling & Cross-selling", content: "Rata-rata nilai keranjang belanja (Average Order Value) saya di angka [Nilai]. Saya ingin menaikkannya 30% tanpa mencari pelanggan baru. Rancang strategi Upselling (tawaran lebih mahal/upgrade) dan Cross-selling (produk pelengkap) yang cerdas untuk [Bisnis Saya]. Kapan waktu yang tepat menawarkannya? Apakah di halaman produk, di cart, atau setelah checkout (One Click Upsell)? Berikan contoh kalimat penawaran (script) yang membuat pelanggan merasa 'sayang kalau tidak diambil sekarang'." },
+            { id: "DBM_10", category: "Digital Business & Monetization", title: "Automasi Bisnis untuk Scaling", content: "Bisnis saya [Nama Bisnis] sudah berjalan, tapi operasionalnya masih sangat manual dan 'man power heavy'. Saya ingin persiapan scaling. Identifikasi 3 proses bisnis utama (misal: on-boarding klien, follow-up leads, pengiriman invoice) yang wajib saya otomatisasi sekarang juga. Sarankan alur kerjanya (workflow) dan tools sederhana (No-Code tools seperti Zapier/Notion/Email Autoresponder) yang bisa menghubungkan proses tersebut sehingga bisa berjalan otomatis 24/7 tanpa saya." },
+
+            // Sales & Closing
+            { id: "SC_01", category: "Sales & Closing", title: "Skrip Closing WhatsApp (Anti-Ghosting)", content: "Masalah utama CS saya adalah calon pembeli sering diam (ghosting) setelah tanya harga. Tolong buatkan skrip alur percakapan WhatsApp yang berkonversi tinggi untuk produk [Produk]. Mulai dari cara menjawab 'Cek harga gan?', cara menggali kebutuhan (probing) agar mereka sadar butuh, hingga teknik closing yang mendesak tapi sopan. Sertakan juga 3 template pesan follow-up untuk H+1, H+3, dan H+7 bagi mereka yang sudah baca tapi tidak membalas, dengan tone yang peduli bukan memaksa." },
+            { id: "SC_02", category: "Sales & Closing", title: "Menangani Keberatan (Objection Handling): 'Mahal'", content: "Saya sering mendengar alasan 'Harganya kemahalan' atau 'Tetangga sebelah lebih murah'. Saya tidak ingin perang harga. Bertindaklah sebagai pelatih sales kelas dunia. Berikan saya 5 teknik respons verbal (scripts) untuk mematahkan keberatan harga ini. Ajarkan saya cara melakukan 'Reframing' agar harga tersebut terlihat kecil dibandingkan nilai/manfaat yang mereka dapat, atau dibandingkan kerugian jika mereka membeli produk murah yang berkualitas buruk." },
+            { id: "SC_03", category: "Sales & Closing", title: "Teknik Consultative Selling (B2B / High Ticket)", content: "Saya menjual jasa/produk mahal [Nama Produk] ke klien korporat atau orang kaya. Teknik hard selling biasa tidak mempan. Saya butuh panduan 'Consultative Selling'. Buatkan daftar 10 pertanyaan diagnostik tajam yang harus saya tanyakan saat meeting pertama. Pertanyaan ini harus membuat klien 'berpikir keras', menyadari besarnya masalah mereka, dan akhirnya menyimpulkan sendiri bahwa mereka membutuhkan solusi saya. Fokus pada menemukan 'Pain Point' terdalam mereka." },
+            { id: "SC_04", category: "Sales & Closing", title: "Strategi Follow-Up Database Lama", content: "Saya punya database 1000 nomor WA/Email prospek yang dulu pernah tanya-tanya tapi tidak jadi beli (Leads busuk). Saya ingin mengaktifkan mereka lagi. Tuliskan satu pesan 'Magic Text' yang pendek, personal, dan terkesan tidak masif (broadcast), yang tujuannya hanya untuk mendapatkan respons Ya/Tidak. Contoh konteks: 'Apakah kamu masih mencari solusi untuk [Masalah]?' Buat variasinya agar saya bisa tes mana yang paling banyak menghasilkan balasan." },
+            { id: "SC_05", category: "Sales & Closing", title: "Psikologi Closing: Scarcity & Urgency", content: "Produk saya sebenarnya stoknya banyak, tapi saya ingin menciptakan urgensi agar orang beli sekarang, bukan nanti-nanti. Berikan saya ide penerapan prinsip kelangkaan (Scarcity) dan urgensi yang etis tapi menekan. Apakah lewat bonus terbatas waktu? Slot terbatas? Kenaikan harga? Tuliskan copy penawaran untuk bagian akhir sales page atau chat yang menggunakan prinsip ini, yang membuat calon pembeli merasa rugi besar jika menunda transaksi 1 jam saja." },
+            { id: "SC_06", category: "Sales & Closing", title: "Skrip Telemarketing / Cold Calling", content: "Tim sales saya harus melakukan Cold Calling ke prospek [Target Prospek] untuk menawarkan [Produk]. Tantangan terberat adalah 10 detik pertama sebelum telepon ditutup. Buatkan naskah pembuka (Opening Script) yang memecah kebekuan, tidak terdengar seperti robot telemarketer bank, dan langsung memberikan konteks 'What's in it for me' bagi penerima telepon. Sertakan juga teknik 'Gatekeeper Breaker' jika kami harus melewati sekretaris atau resepsionis." },
+            { id: "SC_07", category: "Sales & Closing", title: "Closing Lewat Webinar / Live Shopping", content: "Saya akan mengadakan sesi Live Shopping / Webinar untuk menjual [Produk]. Saya butuh struktur 'Pitch' untuk 10 menit terakhir. Bagaimana transisi dari konten edukasi ke jualan (The Bridge)? Bagaimana cara mempresentasikan harga (Price Anchoring) agar terlihat murah? Dan apa 'Call to Action' spesifik yang harus saya teriakkan agar penonton berebut checkout saat itu juga? Buatkan narasi pidato penutupannya." },
+            { id: "SC_08", category: "Sales & Closing", title: "Negosiasi & Win-Win Solution", content: "Saya sedang dalam tahap negosiasi final dengan klien besar untuk proyek senilai [Nilai Proyek]. Mereka meminta diskon besar yang menggerus profit saya. Bertindaklah sebagai ahli negosiasi FBI (seperti Chris Voss). Berikan saya strategi dan frasa kunci untuk menolak permintaan diskon tersebut tanpa membatalkan kesepakatan. Bagaimana cara menawarkan 'Value Add' (tambahan nilai non-moneter) sebagai pengganti diskon harga? Berikan contoh kalimat negosiasinya." },
+            { id: "SC_09", category: "Sales & Closing", title: "Teknik Storytelling untuk Sales", content: "Saya ingin tim sales saya berhenti menyodorkan fitur, dan mulai bercerita. Siapkan 3 kerangka cerita pendek (sales stories) yang bisa mereka hafal dan gunakan saat presentasi. 1. Cerita 'The Vision' (Masa depan cerah setelah pakai produk), 2. Cerita 'The Horror' (Apa yang terjadi pada klien lain yang salah pilih produk kompetitor), 3. Cerita 'The Founder' (Kenapa produk ini diciptakan dengan hati). Sesuaikan konteksnya untuk produk [Produk Saya]." },
+            { id: "SC_10", category: "Sales & Closing", title: "Recovery Prospek yang Menolak (Objection Handling Lanjutan)", content: "Prospek sudah bilang 'TIDAK' atau 'Saya pikir-pikir dulu'. Kebanyakan sales akan menyerah. Saya ingin strategi 'Hail Mary' (usaha terakhir). Buatkan satu pesan terakhir yang elegan, tidak putus asa, yang bertujuan untuk meninggalkan kesan positif profesional dan membuka pintu untuk masa depan. Tujuannya, jika 3 bulan lagi mereka butuh, atau jika solusi kompetitor yang mereka pilih ternyata gagal, kamilah orang pertama yang mereka hubungi. Tuliskan pesan tersebut." },
+
+            // Copywriting & Storytelling
+            { id: "CP_01", category: "Copywriting & Storytelling", title: "Mengubah Fitur Teknis Menjadi Manfaat Emosional", content: "Saya memiliki daftar fitur teknis produk [Nama Produk] yang membosankan: [Sebutkan 3 Fitur Utama, misal: Baterai 5000mAh, Bahan Katun 100%]. Pelanggan tidak peduli spesifikasi, mereka peduli apa untungnya buat mereka. Bertindaklah sebagai copywriter senior. Tolong terjemahkan setiap fitur tersebut menjadi manfaat emosional dan praktis dalam kehidupan sehari-hari pengguna. Gunakan formula 'Fitur > Keuntungan Fungsional > Manfaat Emosional Dalam'. Buat kalimatnya menyentuh rasa aman, kenyamanan, atau status sosial mereka." },
+            { id: "CP_02", category: "Copywriting & Storytelling", title: "Headline Landing Page yang Menghipnotis", content: "Landing page saya untuk [Produk/Jasa] memiliki bounce rate tinggi. Saya curiga headline saya membosankan. Tolong buatkan 10 variasi headline menggunakan '4U Formula' (Urgent, Unique, Ultra-specific, Useful). Saya ingin headline ini langsung menampar kesadaran target market [Target Market] tentang masalah terbesar mereka, dan menjanjikan solusi tanpa terdengar clickbait murahan. Sertakan sub-headline untuk setiap variasi yang menjelaskan 'Cara' mencapainya." },
+            { id: "CP_03", category: "Copywriting & Storytelling", title: "Analogi dan Metafora untuk Menjelaskan Konsep Rumit", content: "Produk/Layanan saya [Nama Produk] cukup rumit untuk dijelaskan kepada orang awam karena melibatkan teknis [Sebutkan Aspek Rumit]. Jika prospek bingung, mereka tidak akan beli. Bantu saya mencari 3 metafora atau analogi cerdas dari kehidupan sehari-hari (seperti membandingkannya dengan mobil, kesehatan, atau makanan) yang membuat konsep ini langsung 'klik' di otak mereka dalam 5 detik. Tuliskan naskah penjelasan singkat menggunakan analogi tersebut." },
+            { id: "CP_04", category: "Copywriting & Storytelling", title: "Copywriting Halaman 'Tentang Kami' (About Us)", content: "Halaman 'About Us' di website saya sangat kaku dan korporat. Isinya hanya tahun berdiri dan visi misi normatif. Saya ingin mengubahnya menjadi narasi yang humanis. Tulis ulang halaman ini dengan sudut pandang 'Kenapa kami melakukan ini'. Ceritakan momen 'Ah-ha' saat pendiri menemukan masalah di pasar, perjuangan membangun solusi, dan janji tulus kami kepada pelanggan. Buat pembaca merasa bahwa membeli dari kami adalah mendukung sebuah misi mulia, bukan sekadar memperkaya pemilik bisnis." },
+            { id: "CP_05", category: "Copywriting & Storytelling", title: "Menulis Bullet Points yang Menjual (Fascinations)", content: "Saya sedang menyusun penawaran untuk produk [Nama Produk]. Saya butuh serangkaian 'Bullet Points' yang menggoda untuk ditaruh di sales page. Jangan hanya tulis poin biasa. Gunakan teknik 'Blind Bullets' atau 'Fascinations' yang memicu rasa penasaran ekstrem tapi tidak membocorkan rahasianya. Contoh: 'Satu kalimat sederhana yang bisa membuat klien deal dalam 5 menit'. Buatkan 7-10 poin seperti ini yang menyoroti manfaat unik produk saya." },
+            { id: "CP_06", category: "Copywriting & Storytelling", title: "Memperbaiki Teks Iklan yang Gagal (Review)", content: "Berikut adalah teks iklan saya yang performanya buruk: '[Tempel Teks Iklan Lama di Sini]'. Bertindaklah sebagai konsultan iklan direct response legendaris (seperti David Ogilvy). Bedah iklan ini tanpa ampun. Apa yang salah? Apakah hook-nya lemah? Apakah penawarannya tidak jelas? Setelah mengkritik, tolong tulis ulang iklan ini menjadi versi yang jauh lebih tajam, persuasif, dan berorientasi pada tindakan (action-oriented) untuk audiens Indonesia." },
+            { id: "CP_07", category: "Copywriting & Storytelling", title: "Copywriting Email Pengingat Keranjang (Abandoned Cart)", content: "Banyak orang meninggalkan keranjang belanja (Abandoned Cart) di toko online saya. Saya ingin mengirim email otomatis yang lucu, berkesan, dan tidak terlihat 'ngemis'. Tuliskan subjek email yang unik (yang pasti dibuka) dan isi email yang menggunakan humor atau pendekatan personal. Contoh angle: 'Apakah Wi-Fi kamu mati?' atau 'Barangmu kedinginan sendirian di sini'. Tujuannya membuat mereka tersenyum lalu menyelesaikan pembayaran." },
+            { id: "CP_08", category: "Copywriting & Storytelling", title: "Teknik 'Future Pacing' dalam Penawaran", content: "Saya ingin calon pembeli bisa merasakan hasil produk sebelum mereka membelinya. Gunakan teknik NLP 'Future Pacing'. Tuliskan satu paragraf deskriptif yang mengajak pembaca memejamkan mata dan membayangkan hidup mereka 30 hari dari sekarang setelah menggunakan [Produk Saya]. Deskripsikan dengan detail sensorik (apa yang mereka lihat, dengar, dan rasakan) ketika masalah mereka hilang dan hidup mereka menjadi lebih baik. Buat ini senyata mungkin." },
+            { id: "CP_09", category: "Copywriting & Storytelling", title: "Membuat Testimoni Menjadi Studi Kasus Mini", content: "Saya punya testimoni pendek dari klien: 'Produknya bagus, saya suka'. Ini terlalu standar. Saya ingin mengembangkan ini menjadi studi kasus mini (micro-case study) untuk konten sosial media. Dengan asumsi produk saya memberikan hasil [Hasil Spesifik], tolong buatkan narasi 'Before-After' yang dramatis. Ceritakan keputusasaan mereka sebelum bertemu produk ini, keraguan mereka saat mau beli, dan transformasi hidup mereka setelahnya. Jadikan ini cerita kepahlawanan pelanggan." },
+            { id: "CP_10", category: "Copywriting & Storytelling", title: "Copywriting Garansi (Risk Reversal)", content: "Orang takut membeli karena takut rugi. Saya ingin menawarkan garansi yang sangat kuat untuk menghilangkan risiko (Risk Reversal) bagi [Produk]. Jangan hanya tulis 'Garansi 30 Hari'. Buatkan copy garansi yang berani, menantang, dan menunjukkan kepercayaan diri total saya terhadap kualitas produk. Contoh: 'Jika Anda tidak merasakan manfaat X dalam Y hari, kami akan kembalikan uang Anda + traktir kopi sebagai permintaan maaf'. Buat bahasanya tegas tapi adil." },
+
+            // Layanan Pelanggan & Retensi
+            { id: "CSR_01", category: "Layanan Pelanggan & Retensi", title: "De-eskalasi Pelanggan Marah (Crisis Management)", content: "Saya baru saja menerima komplain keras dari pelanggan yang sangat marah karena [Masalah: Pengiriman Telat/Barang Rusak]. Dia mengancam akan viral di media sosial. Tolong buatkan skrip respons (untuk WA atau Email) yang menggunakan empati taktis. Tujuannya adalah: 1. Memvalidasi kemarahan mereka (jangan defensif), 2. Meminta maaf dengan tulus tanpa alasan berbelit, 3. Memberikan solusi kompensasi yang 'Wow' (over-deliver) sehingga dia berbalik menjadi fans setia. Nada bicaranya harus tenang, profesional, dan sangat membantu." },
+            { id: "CSR_02", category: "Layanan Pelanggan & Retensi", title: "Desain Loyalty Program Sederhana", content: "Saya ingin pelanggan [Jenis Bisnis] saya belanja lebih sering. Sistem poin yang ribet biasanya gagal. Bantu saya merancang 'Loyalty Program' sederhana yang mudah dimengerti tapi bikin ketagihan. Apa reward yang bisa saya berikan setelah pembelian ke-3 atau ke-5? Apakah sistem stempel digital, atau membership tier? Pastikan reward-nya punya nilai tinggi di mata pelanggan tapi biaya rendah (low cost, high value) bagi saya." },
+            { id: "CSR_03", category: "Layanan Pelanggan & Retensi", title: "Meminta Ulasan Bintang 5 Tanpa Memaksa", content: "Saya butuh lebih banyak review positif di Google Maps/Marketplace untuk social proof. Masalahnya, pelanggan puas biasanya diam, cuma yang kecewa yang cerewet. Tuliskan skrip pesan otomatis yang dikirim H+3 setelah barang sampai. Pesan ini harus ramah, menanyakan kepuasan mereka terlebih dahulu (filter), dan jika mereka puas, baru minta bantuan review dengan alasan yang menyentuh (misal: 'Membantu bisnis kecil kami tumbuh')." },
+            { id: "CSR_04", category: "Layanan Pelanggan & Retensi", title: "Surat Cinta untuk Pelanggan (Unboxing Experience)", content: "Saya ingin momen unboxing produk [Produk] menjadi spesial. Tolong buatkan isi 'Thank You Card' yang akan diselipkan di paket. Jangan gunakan kata-kata template 'Terima kasih sudah berbelanja'. Buatlah surat pendek yang personal, menceritakan sedikit tentang siapa di balik brand ini, dan betapa berartinya dukungan mereka bagi kami. Tambahkan P.S. (Post Scriptum) yang berisi kejutan kecil atau instruksi rahasia." },
+            { id: "CSR_05", category: "Layanan Pelanggan & Retensi", title: "Strategi 'Surprise & Delight'", content: "Untuk meningkatkan retensi, saya ingin memberikan kejutan tak terduga ('Surprise & Delight') kepada 20% pelanggan terbaik saya (Pareto). Berikan 5 ide kreatif dan murah meriah untuk memberikan kejutan ini. Bukan diskon, melainkan gestur personal yang membuat mereka merasa dihargai sebagai manusia, bukan angka penjualan. Jelaskan bagaimana cara eksekusinya agar terasa otentik." },
+            { id: "CSR_06", category: "Layanan Pelanggan & Retensi", title: "Onboarding Klien Baru (Service Business)", content: "Setelah klien deal dan bayar jasa [Jenis Jasa], seringkali ada kebingungan 'What's next?'. Saya ingin menciptakan pengalaman onboarding yang premium dan menenangkan. Buatkan checklist alur komunikasi 3 hari pertama setelah pembayaran. Apa email/pesan sambutan yang harus dikirim? Informasi apa yang harus diberikan agar mereka tenang dan percaya bahwa proyek mereka ada di tangan yang tepat? Buat mereka merasa keputusan memilih saya adalah keputusan terbaik tahun ini." },
+            { id: "CSR_07", category: "Layanan Pelanggan & Retensi", title: "Skrip Menolak Permintaan Refund (Sesuai S&K)", content: "Ada pelanggan yang minta refund atau retur, padahal kesalahannya ada di mereka (tidak baca deskripsi) dan melanggar syarat & ketentuan. Saya harus menolak permintaan ini untuk menjaga cashflow, tapi saya tidak ingin mereka sakit hati dan menjelekkan brand. Buatkan skrip penolakan yang tegas namun sangat sopan dan empatik. Tawarkan alternatif solusi lain (win-win) yang bukan pengembalian uang, agar hubungan tetap baik." },
+            { id: "CSR_08", category: "Layanan Pelanggan & Retensi", title: "Mengaktifkan Pelanggan Tidur (Win-Back Campaign)", content: "Saya punya data pelanggan yang sudah lebih dari 6 bulan tidak belanja (Lapsed Customers). Saya ingin menyapa mereka lagi. Buatkan strategi kampanye 'Kami Rindu Kamu'. Tuliskan subjek email atau pesan WA yang tidak jualan, tapi lebih ke arah 'Checking In'. Tawarkan insentif khusus 'Welcome Back' yang hanya berlaku 48 jam untuk memancing mereka kembali bertransaksi." },
+            { id: "CSR_09", category: "Layanan Pelanggan & Retensi", title: "Membangun Komunitas Pelanggan (User Group)", content: "Saya ingin pelanggan saya saling berinteraksi dan membantu satu sama lain agar beban CS berkurang. Saya berencana membuat grup Facebook/WA khusus pengguna [Produk]. Apa 'Rules of Engagement' atau aturan main yang harus saya tetapkan agar grup ini positif dan tidak jadi sarang komplain? Apa topik diskusi mingguan yang harus dipancing oleh admin agar grup tetap hidup dan bernilai?" },
+            { id: "CSR_10", category: "Layanan Pelanggan & Retensi", title: "Survey Kepuasan Pelanggan (NPS) yang Efektif", content: "Saya ingin tahu apa yang sebenarnya dipikirkan pelanggan tentang bisnis saya. Survey panjang pasti diabaikan. Rancang survey kepuasan pelanggan yang super singkat (maksimal 3 pertanyaan) tapi daging semua. Pertanyaan harus bisa menggali: 1. Skor Net Promoter Score (NPS), 2. Apa satu hal utama yang harus kami perbaiki, 3. Apa satu hal yang paling mereka sukai. Berikan format pertanyaan yang mengundang jawaban jujur." },
+
+            // Keuangan & Pricing UMKM
+            { id: "FIN_01", category: "Keuangan & Pricing UMKM", title: "Analisis Titik Impas (Break-Even Point) Sederhana", content: "Saya seorang pemilik bisnis non-akuntan. Saya mau meluncurkan produk baru dengan biaya modal (HPP) [Nilai HPP] dan biaya operasional tetap bulanan [Nilai Opex]. Saya berencana jual di harga [Rencana Harga]. Bantu saya menghitung Break-Even Point (BEP) dalam satuan unit dan Rupiah. Jelaskan dengan bahasa manusia biasa, berapa minimal pcs yang harus saya jual per hari agar saya tidak rugi? Dan seberapa realistis angka itu jika dibandingkan dengan traffic saya saat ini?" },
+            { id: "FIN_02", category: "Keuangan & Pricing UMKM", title: "Strategi Menaikkan Harga Tanpa Kehilangan Pelanggan", content: "Biaya bahan baku naik, dan saya terpaksa harus menaikkan harga jual [Produk] sebesar [Persentase Kenaikan]%. Saya takut pelanggan kabur. Tolong susun strategi komunikasi dan naskah pengumuman kenaikan harga ini. Bagaimana cara membingkai (framing) kenaikan ini sebagai upaya menjaga kualitas, bukan sekadar cari untung? Kapan waktu terbaik mengumumkannya? Dan apakah saya perlu memberikan 'harga lama' untuk terakhir kalinya sebagai pemicu sales (last call)?" },
+            { id: "FIN_03", category: "Keuangan & Pricing UMKM", title: "Memisahkan Keuangan Pribadi dan Bisnis", content: "Sebagai pengusaha UMKM, keuangan saya masih campur aduk antara dompet pribadi dan kas toko. Ini membuat saya pusing melacak profit. Berikan panduan langkah demi langkah (SOP) untuk memisahkan keuangan ini mulai besok pagi. Berapa persen yang harus saya 'gaji' untuk diri sendiri? Bagaimana cara disiplin mencatat pengeluaran kecil-kecil? Berikan sistem amplop atau rekening sederhana yang bisa saya terapkan tanpa software akuntansi mahal." },
+            { id: "FIN_04", category: "Keuangan & Pricing UMKM", title: "Analisis Kesehatan Arus Kas (Cash Flow)", content: "Penjualan saya tinggi, tapi kok rasanya uang tunai di tangan (cash) selalu tipis? Bantu saya mendiagnosis masalah 'Cash Flow' ini. Ajukan 5 pertanyaan kritis tentang termin pembayaran supplier vs termin pembayaran klien, stok mati (inventory), dan kebocoran biaya tak terlihat. Berikan solusi taktis untuk mempercepat uang masuk (cash in) dan memperlambat uang keluar (cash out) secara legal dan etis agar napas bisnis lebih panjang." },
+            { id: "FIN_05", category: "Keuangan & Pricing UMKM", title: "Psikologi Harga Coret dan Decoy Effect", content: "Saya punya 3 varian produk/paket: Murah, Sedang, Mahal. Saya ingin mendorong orang membeli paket yang 'Sedang' atau 'Mahal'. Rancang struktur harga menggunakan 'Decoy Effect' (Efek Umpan). Berapa harga yang harus saya pasang di paket Murah dan Mahal agar paket target terlihat sebagai 'Best Value' atau 'No-Brainer'? Jelaskan logika psikologis di balik angka-angka tersebut." },
+            { id: "FIN_06", category: "Keuangan & Pricing UMKM", title: "Negosiasi Termin Pembayaran dengan Supplier", content: "Untuk memperbaiki cashflow, saya perlu meminta tempo pembayaran (Term of Payment) yang lebih panjang ke supplier bahan baku, dari tunai menjadi 30 hari. Buatkan skrip negosiasi via WhatsApp atau Email ke supplier. Bagaimana cara meyakinkan mereka bahwa memberikan saya hutang adalah aman dan menguntungkan mereka jangka panjang (karena volume pesanan saya akan naik)? Apa jaminan yang bisa saya tawarkan?" },
+            { id: "FIN_07", category: "Keuangan & Pricing UMKM", title: "Audit Biaya Langganan (Cost Cutting)", content: "Saya merasa biaya operasional bulanan membengkak. Bantu saya melakukan audit 'Cost Cutting' yang cerdas. Kategori pengeluaran apa saja yang biasanya merupakan pemborosan tersembunyi di bisnis digital/UMKM (misal: tools yang tidak dipakai, biaya admin bank, iklan yang tidak efisien)? Berikan checklist cara memangkas lemak bisnis ini tanpa mengorbankan kualitas produk atau layanan kepada pelanggan." },
+            { id: "FIN_08", category: "Keuangan & Pricing UMKM", title: "Menghitung Customer Acquisition Cost (CAC) Maksimal", content: "Saya mau beriklan di FB/TikTok Ads, tapi bingung berani bayar berapa per 1 customer (CPA). Jika profit kotor per produk saya adalah [Nilai Profit], dan rata-rata orang beli [Jumlah] kali setahun (LTV). Bantu saya menghitung berapa 'Willingness to Pay' atau biaya iklan maksimal yang aman agar saya tidak boncos? Berikan rumus sederhana dan simulasi skenario konservatif vs agresif." },
+            { id: "FIN_09", category: "Keuangan & Pricing UMKM", title: "Strategi Bundling untuk Meningkatkan Margin", content: "Stok produk A (laris, margin tipis) dan produk B (kurang laku, margin tebal) menumpuk. Saya ingin menggabungkannya. Rancang strategi 'Bundling' yang menarik. Apa nama paketnya? Bagaimana hitungan diskonnya agar terlihat besar bagi pelanggan tapi margin gabungan saya tetap sehat atau malah naik? Berikan contoh copy penawaran paket bundling ini." },
+            { id: "FIN_10", category: "Keuangan & Pricing UMKM", title: "Persiapan Dana Darurat Bisnis", content: "Belajar dari pandemi/resesi, saya ingin bisnis saya tahan banting. Berapa idealnya jumlah dana darurat (cash reserve) yang harus saya simpan di bank? Apakah 3 bulan atau 6 bulan operasional? Dan bagaimana strategi menyisihkannya dari omzet bulanan yang naik turun? Buatkan aturan persentase alokasi profit (Profit First method) sederhana untuk dana darurat, pajak, operasional, dan gaji owner." },
+
+            // Produktivitas & Manajemen Waktu
+            { id: "PROD_01", category: "Produktivitas & Manajemen Waktu", title: "Matriks Prioritas Eisenhower untuk Founder", content: "Sebagai pemilik bisnis, to-do list saya tidak pernah habis dan semuanya terasa 'Penting'. Saya kewalahan. Bantu saya memilah tugas-tugas ini menggunakan 'Eisenhower Matrix'. Saya akan berikan daftar tugas harian saya: [Sebutkan 5-10 tugas, misal: balas chat, meeting tim, strategi, posting sosmed]. Tolong kategorikan mana yang harus saya Kerjakan (Do), Jadwalkan (Decide), Delegasikan (Delegate), dan Hapus (Delete). Berikan alasan kenapa saya sebagai founder tidak boleh mengerjakan tugas-tugas sepele tertentu." },
+            { id: "PROD_02", category: "Produktivitas & Manajemen Waktu", title: "Rutinitas Pagi Founder Berperformansi Tinggi", content: "Saya merasa hari saya kacau sejak bangun tidur. Saya langsung cek HP dan reaktif terhadap masalah. Rancanglah sebuah 'Morning Routine' (Rutinitas Pagi) durasi 60 menit yang realistis untuk meningkatkan fokus dan energi. Apa yang harus saya lakukan untuk fisik, mental, dan spiritual sebelum menyentuh pekerjaan? Tujuannya adalah agar saya memegang kendali hari, bukan dikendalikan oleh notifikasi." },
+            { id: "PROD_03", category: "Produktivitas & Manajemen Waktu", title: "Teknik Time Blocking & Deep Work", content: "Saya sulit fokus mengerjakan tugas strategis (seperti membuat konten atau rencana bisnis) karena gangguan notifikasi terus menerus. Ajarkan saya menerapkan metode 'Time Blocking' dan 'Deep Work'. Bagaimana cara membagi jadwal kerja 8 jam saya? Kapan waktu terbaik untuk kerja fokus (tanpa HP) dan kapan waktu untuk kerja dangkal (balas email/admin)? Buatkan contoh jadwal harian yang ideal." },
+            { id: "PROD_04", category: "Produktivitas & Manajemen Waktu", title: "Mengatasi Penundaan (Procrastination) Akut", content: "Ada satu tugas besar [Sebutkan Tugas] yang sudah saya tunda berminggu-minggu karena rasanya berat sekali. Gunakan pendekatan psikologis untuk membantu saya memulainya sekarang juga. Pecah tugas besar ini menjadi langkah-langkah mikro (micro-steps) yang konyol saking mudahnya, sehingga otak saya tidak punya alasan untuk menolak. Berikan pep talk singkat yang memotivasi." },
+            { id: "PROD_05", category: "Produktivitas & Manajemen Waktu", title: "Manajemen Rapat (Meeting) yang Efisien", content: "Tim saya terlalu sering rapat yang berlarut-larut tanpa hasil (NATO - No Action Talk Only). Saya ingin mengubah budaya meeting kami. Buatkan SOP 'Effective Meeting'. Apa aturan mainnya? (misal: Wajib ada agenda, maksimal 30 menit, HP dilarang). Bagaimana struktur notulensi yang berorientasi pada aksi (Who does What by When)? Bantu saya menyelamatkan waktu tim saya." },
+            { id: "PROD_06", category: "Produktivitas & Manajemen Waktu", title: "Seni Pendelegasian Tugas", content: "Saya tipe 'Control Freak', sulit percaya orang lain mengerjakan tugas saya. Tapi saya lelah. Bantu saya belajar mendelegasikan tugas [Sebutkan Tugas] ke asisten/karyawan. Buatkan format instruksi pendelegasian yang jelas agar mereka paham ekspektasi saya, standar kualitas (Definition of Done), dan tenggat waktu. Bagaimana cara saya memonitor tanpa melakukan micromanagement yang menyebalkan?" },
+            { id: "PROD_07", category: "Produktivitas & Manajemen Waktu", title: "Mengelola 'Digital Clutter' dan Informasi", content: "File di laptop berantakan, email ribuan belum dibaca, ide tercecer di notes. Saya stres melihatnya. Berikan sistem organisasi digital (Second Brain) sederhana menggunakan folder atau tools (seperti Notion/Google Drive). Bagaimana struktur folder yang logis untuk bisnis [Jenis Bisnis]? Apa rutinitas mingguan yang harus saya lakukan untuk 'bersih-bersih' digital agar pikiran tetap jernih?" },
+            { id: "PROD_08", category: "Produktivitas & Manajemen Waktu", title: "Menyeimbangkan Kerja Keras dan Istirahat (Burnout Prevention)", content: "Saya bekerja 14 jam sehari dan mulai merasa gejala burnout (lelah mental, sinis, tidak produktif). Saya ingin tetap ambisius tapi sehat. Rancang strategi 'Active Rest' (Istirahat Aktif). Apa aktivitas istirahat singkat di tengah kerja dan istirahat akhir pekan yang benar-benar me-recharge otak pengusaha? Bukan sekadar tidur atau main HP. Berikan panduan ritme kerja sprint vs recovery." },
+            { id: "PROD_09", category: "Produktivitas & Manajemen Waktu", title: "Framework Pengambilan Keputusan Cepat", content: "Saya sering mengalami 'Analysis Paralysis', terlalu lama mikir saat harus mengambil keputusan bisnis (misal: pilih vendor, luncurkan produk). Berikan saya 3 framework mental (Mental Models) untuk mengambil keputusan lebih cepat dan akurat (seperti Regret Minimization Framework atau 40-70 Rule). Terapkan framework tersebut pada dilema yang sedang saya hadapi: [Sebutkan Dilema]." },
+            { id: "PROD_10", category: "Produktivitas & Manajemen Waktu", title: "Mengatakan 'Tidak' dengan Elegan", content: "Banyak tawaran kolaborasi, ajakan ngopi, atau permintaan diskon teman yang sebenarnya tidak selaras dengan tujuan bisnis saya saat ini. Saya orangnya 'Gak Enakan'. Tolong buatkan 3 variasi template pesan untuk menolak tawaran-tawaran tersebut dengan tegas namun sangat sopan dan tetap menjaga hubungan baik. Saya ingin melindungi waktu saya tanpa membakar jembatan pertemanan." },
+
+            // Leadership & Teamwork
+            { id: "LEAD_01", category: "Leadership & Teamwork", title: "Merekrut Karyawan yang Tepat (Culture Fit)", content: "Saya mau merekrut [Posisi] untuk tim kecil saya. Skill bisa diajarkan, tapi attitude sulit diubah. Saya tidak mau salah rekrut orang toxic. Buatkan daftar pertanyaan wawancara yang tidak standar (behavioral interview questions) untuk menggali karakter asli, integritas, dan ketahanan mental pelamar. Apa 'Red Flags' (tanda bahaya) yang harus saya waspadai dari jawaban mereka?" },
+            { id: "LEAD_02", category: "Leadership & Teamwork", title: "Memberikan Feedback Negatif Tanpa Menyakiti", content: "Karyawan saya [Nama/Posisi] kinerjanya menurun dan sering melakukan kesalahan [Kesalahan]. Saya harus menegurnya, tapi saya tidak mau dia demotivasi atau baper. Gunakan metode 'SBI' (Situation-Behavior-Impact) atau alternatif yang lebih baik dari Sandwich Method. Tuliskan skrip percakapan one-on-one yang fokus pada perbaikan kinerja dan pengembangan diri dia, bukan menyerang pribadinya." },
+            { id: "LEAD_03", category: "Leadership & Teamwork", title: "Skrip Memecat Karyawan dengan Bermartabat", content: "Ini adalah keputusan berat. Saya harus memberhentikan karyawan karena [Alasan: Efisiensi/Performa Buruk]. Dia orang baik. Tolong buatkan skrip percakapan terminasi yang manusiawi, jelas (tidak memberi harapan palsu), tapi tetap menghargai kontribusinya selama ini. Bagaimana alur pembicaraannya agar tidak terjadi drama, dan apa yang harus saya siapkan untuk membantu transisi karir dia selanjutnya?" },
+            { id: "LEAD_04", category: "Leadership & Teamwork", title: "Membangun Budaya Perusahaan di Tim Remote", content: "Tim saya bekerja remote/WFH dan jarang bertemu. Saya merasa koneksi antar tim mulai renggang dan budaya kerja memudar. Berikan 5 ide aktivitas virtual bonding yang tidak *cringe* atau membosankan. Selain itu, apa ritual komunikasi harian/mingguan yang harus kami lakukan agar semua orang merasa menjadi bagian dari satu tim yang solid (sense of belonging) meskipun terpisah jarak?" },
+            { id: "LEAD_05", category: "Leadership & Teamwork", title: "Memotivasi Tim Penjualan yang Sedang Lesu", content: "Target penjualan bulan ini tidak tercapai dan moral tim sales sedang hancur. Jika saya marah-marah, mereka makin down. Jika saya diam, tidak ada perubahan. Bertindaklah sebagai Sales Manager yang inspiratif. Tuliskan naskah pidato singkat (pep talk) untuk meeting pagi besok. Fokus pada membangkitkan semangat juang, mengingatkan kembali pada 'Why' mereka, dan memberikan strategi taktis sederhana untuk meraih kemenangan kecil (small wins) hari ini." },
+            { id: "LEAD_06", category: "Leadership & Teamwork", title: "Menetapkan KPI (Key Performance Indicator) yang Adil", content: "Karyawan saya di posisi [Posisi] bingung apa ukuran sukses kerjanya. Saya ingin menetapkan KPI yang SMART (Specific, Measurable, Achievable, Relevant, Time-bound). Bantu saya merumuskan 3-5 KPI utama untuk posisi tersebut. Pastikan ada keseimbangan antara metrik hasil (misal: omzet) dan metrik aktivitas (misal: jumlah call/post), agar mereka punya kendali atas apa yang harus dilakukan setiap hari." },
+            { id: "LEAD_07", category: "Leadership & Teamwork", title: "Resolusi Konflik Antar Karyawan", content: "Ada 'Perang Dingin' antara karyawan A dan karyawan B di tim saya. Suasana kantor jadi tidak enak. Saya harus menjadi mediator. Berikan panduan langkah mediasi konflik ini. Apa yang harus saya katakan saat memanggil mereka berdua? Bagaimana cara membuat mereka fokus pada solusi profesional dan kepentingan perusahaan, bukan ego pribadi? Tuliskan kalimat pembuka mediasi yang netral." },
+            { id: "LEAD_08", category: "Leadership & Teamwork", title: "Gaya Kepemimpinan Situasional", content: "Saya punya tim dengan campuran: Junior (Anak baru, butuh bimbingan) dan Senior (Ahli, butuh otonomi). Saya sadar saya tidak bisa memimpin mereka dengan gaya yang sama. Jelaskan bagaimana saya harus menyesuaikan gaya kepemimpinan saya untuk kedua tipe ini berdasarkan teori 'Situational Leadership'. Kapan saya harus menjadi 'Instruktur' dan kapan saya harus menjadi 'Delegator'? Berikan contoh komunikasi untuk masing-masing." },
+            { id: "LEAD_09", category: "Leadership & Teamwork", title: "Sistem Reward & Punishment yang Efektif", content: "Saya ingin membuat tim lebih disiplin tapi juga merasa dihargai. Sistem 'Reward & Punishment' lama saya sepertinya kurang nendang. Bantu saya merancang sistem insentif modern. Reward apa yang non-moneter tapi sangat disukai karyawan Gen Z/Millennial (misal: fleksibilitas waktu, akses belajar)? Dan apa konsekuensi yang mendidik (bukan sekadar potong gaji) jika mereka melanggar aturan? Buat sistem ini transparan dan adil." },
+            { id: "LEAD_10", category: "Leadership & Teamwork", title: "Transisi dari 'One Man Show' ke CEO", content: "Bisnis mulai besar, tapi mentalitas saya masih 'Palugada' (Apa lu mau gua ada/kerjakan sendiri). Saya menjadi leher botol (bottleneck) pertumbuhan perusahaan. Berikan saya roadmap transformasi mental dan aksi untuk 3 bulan ke depan: Bagaimana cara perlahan melepaskan peran teknis operasional dan beralih sepenuhnya ke peran strategis CEO? Apa 3 tugas pertama yang harus saya lepaskan agar saya bisa fokus membesarkan kapal?" }
+        ];
+
+        // --- DOM ELEMENTS ---
+        const gridElement = document.getElementById('promptGrid');
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const modal = document.getElementById('promptModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalCategory = document.getElementById('modalCategory');
+        const modalContent = document.getElementById('modalContent');
+        const copyButton = document.getElementById('copyButton');
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCategories();
+            renderPrompts(promptsData);
+        });
+
+        // --- RENDER CATEGORIES DYNAMICALLY ---
+        function renderCategories() {
+            const categories = [...new Set(promptsData.map(p => p.category))];
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                categoryFilter.appendChild(option);
+            });
+        }
+
+        // --- RENDER PROMPTS ---
+        function renderPrompts(data) {
+            gridElement.innerHTML = '';
+
+            if (data.length === 0) {
+                gridElement.innerHTML = '<div class="no-results">Tidak ada prompt yang ditemukan.</div>';
+                return;
+            }
+
+            data.forEach(prompt => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => openModal(prompt.id);
+
+                // Helper to truncate text for preview
+                const previewText = prompt.content.length > 150 
+                    ? prompt.content.substring(0, 150) + '...' 
+                    : prompt.content;
+
+                card.innerHTML = `
+                    <div class="card-category">${prompt.category}</div>
+                    <div class="card-title">${prompt.title}</div>
+                    <div class="card-preview">${previewText}</div>
+                    <div class="card-btn">Lihat Prompt</div>
+                `;
+                gridElement.appendChild(card);
+            });
+        }
+
+        // --- SEARCH & FILTER LOGIC ---
+        function filterPrompts() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedCategory = categoryFilter.value;
+
+            const filtered = promptsData.filter(prompt => {
+                const matchesSearch = 
+                    prompt.title.toLowerCase().includes(searchTerm) || 
+                    prompt.content.toLowerCase().includes(searchTerm);
+                
+                const matchesCategory = 
+                    selectedCategory === 'all' || 
+                    prompt.category === selectedCategory;
+
+                return matchesSearch && matchesCategory;
+            });
+
+            renderPrompts(filtered);
+        }
+
+        // Event Listeners for inputs
+        searchInput.addEventListener('keyup', filterPrompts);
+        categoryFilter.addEventListener('change', filterPrompts);
+
+        // --- MODAL LOGIC ---
+        function openModal(id) {
+            const prompt = promptsData.find(p => p.id === id);
+            if (!prompt) return;
+
+            modalTitle.textContent = prompt.title;
+            modalCategory.textContent = prompt.category;
+            modalContent.textContent = prompt.content;
+            
+            // Reset Copy Button
+            const originalBtnContent = `
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 01-2-2V5a2 2 0 012-2h4.586"></path>
+                </svg>
+                <span>Copy Prompt</span>
+            `;
+            copyButton.innerHTML = originalBtnContent;
+            copyButton.style.backgroundColor = 'var(--primary)';
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                closeModal();
+            }
+        });
+
+        // --- COPY FUNCTIONALITY ---
+        function copyPrompt() {
+            const textToCopy = modalContent.textContent;
+            
+            // Modern copy approach
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showCopiedFeedback();
+                }).catch(err => {
+                    console.error('Gagal menyalin: ', err);
+                    fallbackCopy(textToCopy);
+                });
+            } else {
+                fallbackCopy(textToCopy);
+            }
+        }
+
+        function fallbackCopy(text) {
+            // Fallback for older browsers
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showCopiedFeedback();
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+                alert('Gagal menyalin otomatis. Silakan blok dan copy manual.');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function showCopiedFeedback() {
+            copyButton.innerHTML = `
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Berhasil Disalin!</span>
+            `;
+            copyButton.style.backgroundColor = '#10b981'; // Green
+            
+            // Revert button after 2 seconds
+            setTimeout(() => {
+                if (modal.classList.contains('active')) {
+                     copyButton.innerHTML = `
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 01-2-2V5a2 2 0 012-2h4.586"></path>
+                        </svg>
+                        <span>Copy Prompt</span>
+                    `;
+                    copyButton.style.backgroundColor = 'var(--primary)';
+                }
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
+
